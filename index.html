@@ -1049,8 +1049,8 @@
     // =========================================================================
     // 3. 天花板桁架懸吊系統 & 高速 OHT 閉環軌道 (完全從天花板吊掛 ｜ 正對 Load Port 直下放)
     // =========================================================================
-    const ceilingHeight = 26;
-    const ohtRailHeight = 22;
+    const ceilingHeight = 29;
+    const ohtRailHeight = 25;
     const railZ_LoadPort = -8.6; // 正對 Prober Load Port 正上方的軌道軸線！
     const railZ_Front = 6.0;
 
@@ -1097,26 +1097,55 @@
     ledFront.position.set(2, ohtRailHeight + 0.5, railZ_Front);
     scene.add(ledFront);
 
-    // OHT 天車本體 (Muratec / Daifuku 晶圓廠白色流線車型)
+    // OHT 天車本體 (Muratec / Daifuku 晶圓廠白色流線車型 ｜ 實體轉向架連接器 ｜ 杜絕天軌穿體)
     const ohtVehicle = new THREE.Group();
     ohtVehicle.position.copy(loopPoints[0]);
-    ohtVehicle.userData = { name: "OHT 空中高速天車 (Muratec Cleanway #285)" };
+    ohtVehicle.userData = { name: "OHT 空中天車 (Muratec Cleanway #285)" };
     scene.add(ohtVehicle);
 
+    // ★ 頂部實體轉向架滑車組 (Trolley Bogie) - 咬合並行駛於天軌上方，天軌絕不穿過車身！
+    const ohtBogie = new THREE.Mesh(
+      new THREE.BoxGeometry(2.6, 0.45, 1.5),
+      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.9, roughness: 0.25 })
+    );
+    ohtBogie.position.y = 0.1;
+    ohtVehicle.add(ohtBogie);
+
+    // 轉向架精密導輪組 (4 顆夾軌滾輪)
+    [[-1.0, 0.6], [1.0, 0.6], [-1.0, -0.6], [1.0, -0.6]].forEach(([rx, rz]) => {
+      const roller = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.18, 0.18, 0.16, 16),
+        new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.85 })
+      );
+      roller.rotation.z = Math.PI / 2;
+      roller.position.set(rx, 0.0, rz);
+      ohtBogie.add(roller);
+    });
+
+    // ★ 懸吊連接頸支架 (Coupler Suspension Neck) - 連接軌道滑車與下方天車車體
+    const ohtCouplerNeck = new THREE.Mesh(
+      new THREE.BoxGeometry(0.9, 0.85, 0.9),
+      new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.85, roughness: 0.3 })
+    );
+    ohtCouplerNeck.position.y = -0.55;
+    ohtVehicle.add(ohtCouplerNeck);
+
+    // ★ 天車主體 (吊掛於天軌與連接器下方，底高純白流線造型)
     const ohtBody = new THREE.Mesh(
-      new THREE.BoxGeometry(4.2, 2.0, 3.2),
+      new THREE.BoxGeometry(4.2, 1.8, 3.2),
       new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.7, roughness: 0.25 })
     );
-    ohtBody.position.y = 0.2;
+    ohtBody.position.y = -1.9;
     ohtBody.castShadow = true;
     ohtVehicle.add(ohtBody);
 
     const ohtNumDisplay = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.8), new THREE.MeshBasicMaterial({ color: 0x0284c7 }));
-    ohtNumDisplay.position.set(0, 0.4, 1.62);
+    ohtNumDisplay.position.set(0, -1.9, 1.62);
     ohtVehicle.add(ohtNumDisplay);
 
+    // 捲揚鋼索升降吊具 (平時收合於車身下部腔體 Y = -2.8)
     const ohtHoist = new THREE.Group();
-    ohtHoist.position.set(0, -1.1, 0);
+    ohtHoist.position.set(0, -2.8, 0);
     ohtVehicle.add(ohtHoist);
 
     const hoistCables = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.2, 8), new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9 }));
@@ -1209,9 +1238,9 @@
     // =========================================================================
     function createSeparableBoxMesh(boxLabel, containsCard, cardColorHex, cardLabel) {
       const g = new THREE.Group();
-      const silverMat = new THREE.MeshStandardMaterial({ color: 0xd4d8e0, metalness: 0.85, roughness: 0.25 });
+      const silverMat = new THREE.MeshStandardMaterial({ color: 0xd4d8e0, metalness: 0.85, roughness: 0.22 });
 
-      // 底層：下盒 (無灰色圓盤！)
+      // 底層：下盒托盤 (無灰色圓盤，卡片居中放置)
       const base = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.45, 3.6), silverMat);
       base.position.y = 0.22;
       base.castShadow = true;
@@ -1220,25 +1249,27 @@
       let innerCard = null;
       if (containsCard) {
         innerCard = createBareCardMesh(cardColorHex, cardLabel);
-        innerCard.position.set(0, 0.52, 0);
+        innerCard.position.set(0, 0.45, 0);
         g.add(innerCard);
       }
 
-      // 頂層：深罩式金屬上蓋 (外觀與下盒完全齊平，闔蓋時為一體方塊)
+      // 頂層：深罩式金屬上蓋 (外徑 3.75 x 3.75，闔蓋時直接 Overlap 下盒側壁，完全套合不為裸卡刻意留空隙！)
       const lid = new THREE.Group();
-      lid.position.set(0, 0.85, 0);
+      lid.position.set(0, 0.45, 0); // 闔蓋基準位：側裙直接完全套合覆蓋下盒！
 
-      const lidTop = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.25, 3.6), silverMat);
-      lidTop.position.y = 0.4;
+      const lidTop = new THREE.Mesh(new THREE.BoxGeometry(3.75, 0.22, 3.75), silverMat);
+      lidTop.position.y = 0.55;
       lidTop.castShadow = true;
       lid.add(lidTop);
 
-      const skirt = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.65, 3.6), silverMat);
-      skirt.position.y = 0.05;
+      // 深罩加長側裙：高度 0.75，完全 Overlap 下盒四邊側壁
+      const skirt = new THREE.Mesh(new THREE.BoxGeometry(3.75, 0.72, 3.75), silverMat);
+      skirt.position.y = 0.18;
+      skirt.castShadow = true;
       lid.add(skirt);
 
       const handle = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.25, 0.2), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.95 }));
-      handle.position.set(0, 0.6, 0);
+      handle.position.set(0, 0.75, 0);
       lid.add(handle);
 
       g.add(lid);
@@ -1437,47 +1468,62 @@
       pogoPinRing.position.y = -1.45;
       testHeadGroup.add(pogoPinRing);
 
-      // [模組 A] 左側白色主機 (TEL Test System) - 真・門框結構 (正面鏤空，背後為深黑暗室！)
-      const proberWhiteMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.35, roughness: 0.3 });
+      // [模組 A] 左側白色主機 (TEL Test System) - 真・門框結構 (正面潔淨大門完整覆蓋，開門前絕不露黑！)
+      const proberWhiteMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.35, roughness: 0.28 });
+      const proberDarkMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.75, roughness: 0.35 });
 
-      // 機身外壁外框 (頂部橫樑 Y=7.2, 底部門檻 Y=0.4, 側壁)
-      const topLintel = new THREE.Mesh(new THREE.BoxGeometry(5.6, 1.2, 6.4), proberWhiteMat);
-      topLintel.position.set(-2.0, 7.0, 0);
+      // 機身外壁外框 (頂部橫樑 Y=7.0, 底部門檻 Y=0.4, 後壁)
+      const topLintel = new THREE.Mesh(new THREE.BoxGeometry(5.4, 1.2, 6.4), proberWhiteMat);
+      topLintel.position.set(-2.1, 7.0, 0);
+      topLintel.castShadow = true;
       g.add(topLintel);
 
-      const bottomThreshold = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.8, 6.4), proberWhiteMat);
-      bottomThreshold.position.set(-2.0, 0.4, 0);
+      const bottomThreshold = new THREE.Mesh(new THREE.BoxGeometry(5.4, 0.8, 6.4), proberWhiteMat);
+      bottomThreshold.position.set(-2.1, 0.4, 0);
+      bottomThreshold.castShadow = true;
       g.add(bottomThreshold);
 
-      const backEnclosure = new THREE.Mesh(new THREE.BoxGeometry(5.6, 5.6, 1.0), proberWhiteMat);
-      backEnclosure.position.set(-2.0, 3.6, -2.7);
+      const backEnclosure = new THREE.Mesh(new THREE.BoxGeometry(5.4, 5.8, 0.8), proberWhiteMat);
+      backEnclosure.position.set(-2.1, 3.7, -2.8);
       g.add(backEnclosure);
 
+      // ★ 右側與 Load Port 接觸交界面：加寬白色實體平面隔間 (完全遮蔽暗腔黑底，徹底消除露黑！)
+      // 使用者要求：「右側跟load port 接觸的地方 用白色平面蓋住 一樣不要露出裡面黑色放寬為主」
+      const rightInterfaceWall = new THREE.Mesh(
+        new THREE.BoxGeometry(1.1, 7.6, 6.6),
+        proberWhiteMat
+      );
+      rightInterfaceWall.position.set(0.55, 3.8, 0);
+      rightInterfaceWall.castShadow = true;
+      g.add(rightInterfaceWall);
+
       // ★ 門後內部深黑消光腔體 (Chamber Pocket)
+      // 尺寸嚴格退縮凹陷在門後與白色隔間壁左側，前緣 Z <= 2.2，右側 X <= 0.0！
       const darkPocket = new THREE.Mesh(
-        new THREE.BoxGeometry(4.4, 5.4, 4.8),
+        new THREE.BoxGeometry(4.4, 5.2, 4.2),
         new THREE.MeshStandardMaterial({ color: 0x050811, metalness: 0.9, roughness: 0.9 })
       );
-      darkPocket.position.set(-2.0, 3.6, 0.4); // 嚴格退縮凹陷在門後，前緣 Z <= 2.8！
+      darkPocket.position.set(-2.2, 3.6, 0.1);
       g.add(darkPocket);
 
       // 內部精密導軌
-      const innerRailL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 4.2), new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.95 }));
-      innerRailL.position.set(-3.6, 3.9, 0.4);
+      const innerRailL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 4.0), new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.95 }));
+      innerRailL.position.set(-3.6, 3.9, 0.1);
       g.add(innerRailL);
 
-      const innerRailR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 4.2), new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.95 }));
-      innerRailR.position.set(-0.4, 3.9, 0.4);
+      const innerRailR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 4.0), new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.95 }));
+      innerRailR.position.set(-0.8, 3.9, 0.1);
       g.add(innerRailR);
 
       // 內部青藍色科技冷光氛圍
       const chamberLight = new THREE.PointLight(0x00d2ff, 1.4, 6);
-      chamberLight.position.set(-2.0, 5.8, 0.5);
+      chamberLight.position.set(-2.2, 5.8, 0.3);
       g.add(chamberLight);
 
       // 左側控制柱 (Control Column with Screen, Buttons & Signal Tower)
       const leftPillar = new THREE.Mesh(new THREE.BoxGeometry(1.2, 7.6, 6.4), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.5, roughness: 0.3 }));
       leftPillar.position.set(-5.4, 3.8, 0);
+      leftPillar.castShadow = true;
       g.add(leftPillar);
 
       const monitorBracket = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.4, 12), new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.9 }));
@@ -1489,7 +1535,7 @@
       monitorScreen.rotation.y = 0.2;
       g.add(monitorScreen);
 
-      // ★【燈號桿移至左側】：三色信號燈號桿置於左側控制柱與操作螢幕上方！
+      // ★ 三色信號燈號桿置於左側控制柱與操作螢幕上方
       const tMast = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.5, 16), new THREE.MeshStandardMaterial({ color: 0x64748b }));
       tMast.position.set(-5.4, 10.2, 1.0);
       g.add(tMast);
@@ -1523,35 +1569,70 @@
         g.add(hole);
       });
 
-      // ★ 正面潔淨白門 (一開始最外層 100% 為門，未開門前完全遮蔽，開門後才露黑！)
+      // ★【加大正面純白潔淨門】：全面加大尺寸！完全遮蓋門洞、上下門檻、左右側壁，未開門前 100% 遮蔽，不讓外界看到裡面是黑色！
+      // 使用者要求：「首先 門的大小要大一點完全遮住 、不讓外可以看到裡面是黑色」
       const doorHingePivot = new THREE.Group();
-      doorHingePivot.position.set(-4.4, 0, 3.3); // 左側外表面鉸鏈軸心
+      doorHingePivot.position.set(-4.8, 0, 3.34); // 位於左側立柱邊緣的強固旋轉鉸鏈
       g.add(doorHingePivot);
 
       const doorPanel = new THREE.Mesh(
-        new THREE.BoxGeometry(4.4, 6.0, 0.16),
-        new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.35, roughness: 0.3 })
+        new THREE.BoxGeometry(5.45, 6.15, 0.18),
+        new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.35, roughness: 0.25 })
       );
-      doorPanel.position.set(2.2, 3.8, 0);
+      // 寬度 5.45：自 X = -4.8 橫跨至 X = +0.65，深入覆蓋右側白色平面隔間 (X = 0.0 ~ 1.1) 達 0.65 單位！
+      // 高度 6.15：自 Y = 0.58 覆蓋至 Y = 6.72，垂直完全重疊上下門檻橫樑！
+      doorPanel.position.set(2.725, 3.65, 0);
+      doorPanel.castShadow = true;
       doorHingePivot.add(doorPanel);
 
-      [1.6, 5.8].forEach(hy => {
-        const hinge = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.5, 12), new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.95 }));
+      // 門面工業感細節：門框倒角壓邊、TEL 標章飾條與深色人體工學把手
+      const doorTrim = new THREE.Mesh(
+        new THREE.BoxGeometry(5.25, 5.95, 0.04),
+        new THREE.MeshStandardMaterial({ color: 0xedf2f7, metalness: 0.2, roughness: 0.4 })
+      );
+      doorTrim.position.set(2.725, 3.65, 0.10);
+      doorHingePivot.add(doorTrim);
+
+      [1.4, 5.9].forEach(hy => {
+        const hinge = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.55, 16), new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.95 }));
         hinge.position.set(0, hy, 0.1);
         doorHingePivot.add(hinge);
       });
 
-      const handle = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.9, 0.1), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
-      handle.position.set(4.0, 4.0, 0.1);
-      doorPanel.add(handle);
+      const handle = new THREE.Mesh(new THREE.BoxGeometry(0.25, 1.2, 0.15), new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.8 }));
+      handle.position.set(5.05, 3.7, 0.15);
+      doorHingePivot.add(handle);
 
-      // [模組 B] 右側炭黑色 Prexa Load Port (【完全向上開放無遮蔽】)
-      const prexaBody = new THREE.Mesh(new THREE.BoxGeometry(3.6, 4.2, 6.4), new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.3 }));
-      prexaBody.position.set(2.8, 2.1, 0);
-      g.add(prexaBody);
+      const doorBrandPlate = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.45), new THREE.MeshBasicMaterial({ color: 0x0284c7 }));
+      doorBrandPlate.position.set(2.6, 5.8, 0.13);
+      doorHingePivot.add(doorBrandPlate);
 
-      const loadPortStage = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.5, 3.2), new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.9 }));
-      loadPortStage.position.set(2.8, 4.45, 1.9); // 正對天軌 Z = -8.6
+      // [模組 B] 右側 Prexa Load Port (正面留空 ｜ 後方倒 L 型一體化立體包覆機罩)
+      // 使用者要求：「然後load port 正面留空是對的 都是不可能是一直版 後面 應該有包覆起來 像一個倒L」
+
+      // 1. 下方穩固支撐基座 (Floor Base Cabinet)
+      const prexaBase = new THREE.Mesh(
+        new THREE.BoxGeometry(3.3, 4.2, 6.6),
+        proberWhiteMat
+      );
+      prexaBase.position.set(2.75, 2.1, 0.1);
+      prexaBase.castShadow = true;
+      g.add(prexaBase);
+
+      const basePlinth = new THREE.Mesh(
+        new THREE.BoxGeometry(3.35, 0.6, 6.65),
+        proberDarkMat
+      );
+      basePlinth.position.set(2.75, 0.3, 0.1);
+      g.add(basePlinth);
+
+      // 2. 正面開放式 FOUP 承載平台 (Load Port Docking Stage - 正面向上留空，專供 OHT 吊索直落)
+      const loadPortStage = new THREE.Mesh(
+        new THREE.BoxGeometry(3.2, 0.45, 3.2),
+        new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.9, roughness: 0.2 })
+      );
+      loadPortStage.position.set(2.8, 4.42, 1.9); // 正對天軌 Z = -8.6
+      loadPortStage.castShadow = true;
       g.add(loadPortStage);
 
       [[-0.9, -0.9], [0.9, -0.9], [0, 0.9]].forEach(([px, pz]) => {
@@ -1560,11 +1641,81 @@
         loadPortStage.add(pin);
       });
 
-      const foupOpenerBack = new THREE.Mesh(new THREE.BoxGeometry(3.0, 3.2, 0.3), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
-      foupOpenerBack.position.set(2.8, 6.2, 0.2);
-      g.add(foupOpenerBack);
+      // 3. ★【倒 L 型立體包覆機罩 (Inverted-L Housing)】(徹底告別薄片直板，全包覆倒L實體外罩！)
+      // (a) 倒 L 的「垂直背艙主體」：自載台後緣 (Z = 0.35) 向後深厚延伸至機背 (Z = -3.2)，高度自 Y=4.2 直通頂部 Y=7.6！
+      const invertedLVerticalBody = new THREE.Mesh(
+        new THREE.BoxGeometry(3.3, 3.4, 3.55),
+        proberWhiteMat
+      );
+      invertedLVerticalBody.position.set(2.75, 5.9, -1.425);
+      invertedLVerticalBody.castShadow = true;
+      g.add(invertedLVerticalBody);
 
-      // ★ [PC 光碟機式吐盤] 探針卡載盤自深黑暗腔內部平滑伸出 (Y = 4.0 腰胸高度)
+      // (b) 倒 L 的「頂部向前懸臂遮罩」：在頂部 Y = 6.6 ~ 7.6 向前伸出 (Overhang) 至 Z = 0.65，構成標準側視倒 L (⌐) 輪廓！
+      // 懸臂在 Z = 0.65 止步，絕對不遮擋 Z = 0.7 ~ 3.1 的 FOUP 座落區與 OHT 垂直起降垂直空域！
+      const invertedLOverhangCanopy = new THREE.Mesh(
+        new THREE.BoxGeometry(3.3, 1.0, 3.85),
+        proberWhiteMat
+      );
+      invertedLOverhangCanopy.position.set(2.75, 7.1, -1.275);
+      invertedLOverhangCanopy.castShadow = true;
+      g.add(invertedLOverhangCanopy);
+
+      const canopyTopTrim = new THREE.Mesh(
+        new THREE.BoxGeometry(3.32, 0.12, 3.87),
+        proberDarkMat
+      );
+      canopyTopTrim.position.set(2.75, 7.56, -1.275);
+      g.add(canopyTopTrim);
+
+      // (c) FIMS 晶圓傳輸門與門閥機構 (垂直立體正面 Z = 0.36)
+      const fimsDoorFrame = new THREE.Mesh(
+        new THREE.BoxGeometry(2.8, 2.2, 0.08),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.6 })
+      );
+      fimsDoorFrame.position.set(2.8, 5.4, 0.36);
+      g.add(fimsDoorFrame);
+
+      // 雙吸盤與開鎖插銷機構 (FIMS Latch Key Mechanism)
+      [[-0.8, 0.3], [0.8, 0.3]].forEach(([kx, ky]) => {
+        const latchPin = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.14, 16), new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9 }));
+        latchPin.rotation.x = Math.PI / 2;
+        latchPin.position.set(2.8 + kx, 5.4 + ky, 0.42);
+        g.add(latchPin);
+      });
+
+      // 晶圓測繪光學感測條 (Wafer Mapper Optical Sensor Bar)
+      const waferMapperBar = new THREE.Mesh(
+        new THREE.BoxGeometry(2.6, 0.08, 0.08),
+        new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.8 })
+      );
+      waferMapperBar.position.set(2.8, 4.45, 0.42);
+      g.add(waferMapperBar);
+
+      // (d) 倒 L 懸臂頂部正面：SEMI E84 智慧狀態指示光條 (E84 Carrier Status Light Bar)
+      const e84StatusLightBar = new THREE.Mesh(
+        new THREE.BoxGeometry(2.4, 0.22, 0.05),
+        new THREE.MeshBasicMaterial({ color: 0x00e676 })
+      );
+      e84StatusLightBar.position.set(2.8, 7.1, 0.66);
+      g.add(e84StatusLightBar);
+
+      // 右外側維護與手動裝卸控制面板 (Side Maintenance Interface)
+      const sidePanel = new THREE.Mesh(
+        new THREE.BoxGeometry(0.08, 1.4, 1.0),
+        new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.7 })
+      );
+      sidePanel.position.set(4.42, 5.2, 0.0);
+      g.add(sidePanel);
+
+      const sideEstop = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.08, 0.06, 16),
+        new THREE.MeshBasicMaterial({ color: 0xef4444 })
+      );
+      sideEstop.rotation.z = Math.PI / 2;
+      sideEstop.position.set(4.48, 5.5, 0.2);
+      g.add(sideEstop);
+// ★ [PC 光碟機式吐盤] 探針卡載盤自深黑暗腔內部平滑伸出 (Y = 4.0 腰胸高度)
       const pccStageGroup = new THREE.Group();
       pccStageGroup.position.set(-2.0, 4.0, 0.4); // 平時縮在暗腔深處！
       g.add(pccStageGroup);
@@ -1639,15 +1790,15 @@
       agvVehicle.add(lidar);
     });
 
-    // ★ 純白 50% 半透明流線型機身 (透明度 0.5，可直接透視車內下層艙！)
+    // ★ 純白 30% 半透明流線型機身 (透明度 30% / Opacity 0.7，隱約透視車體內藏之第二張卡)
     const agvTranslucentBody = new THREE.Mesh(
       new THREE.BoxGeometry(6.6, 2.0, 4.6),
       new THREE.MeshStandardMaterial({
         color: 0xf8fafc,
         transparent: true,
-        opacity: 0.5,
-        roughness: 0.2,
-        metalness: 0.3
+        opacity: 0.7, // 30% 透明度 (厚實潔淨白機身，微透視下層備用卡)
+        roughness: 0.25,
+        metalness: 0.25
       })
     );
     agvTranslucentBody.position.y = 1.7;
@@ -1662,14 +1813,16 @@
     armPedestal.position.set(2.0, 3.1, 0);
     agvVehicle.add(armPedestal);
 
-    // ★【車載雙平台升降切換機構】：
+    // ★【車載雙平台升降切換機構 ＆ 銀白色金屬載具圓盤】：
     // 頂部工作工位在 X = -1.2, Z = 0
     // Platform A (平台 1 / 好卡台)：可在頂部 Y = 2.8 或下沉至車內下層 Y = 1.0 (手臂下方 X = 1.2)
+    const silverDeckMat = new THREE.MeshStandardMaterial({ color: 0xd4d8e0, metalness: 0.85, roughness: 0.2 });
+
     const agvPlatformA = new THREE.Group();
     agvPlatformA.position.set(-1.2, 2.8, 0); // 初始在頂部
     agvVehicle.add(agvPlatformA);
 
-    const platADeck = new THREE.Mesh(new THREE.CylinderGeometry(1.65, 1.65, 0.18, 32), new THREE.MeshStandardMaterial({ color: 0x166534, metalness: 0.7 }));
+    const platADeck = new THREE.Mesh(new THREE.CylinderGeometry(1.65, 1.65, 0.18, 32), silverDeckMat);
     agvPlatformA.add(platADeck);
 
     const cardOnPlatA = createBareCardMesh(0x16a34a, "PC-GOOD-88");
@@ -1682,7 +1835,7 @@
     agvPlatformB.position.set(1.2, 1.0, 0); // 初始在車內下層！
     agvVehicle.add(agvPlatformB);
 
-    const platBDeck = new THREE.Mesh(new THREE.CylinderGeometry(1.65, 1.65, 0.18, 32), new THREE.MeshStandardMaterial({ color: 0x9a3412, metalness: 0.7 }));
+    const platBDeck = new THREE.Mesh(new THREE.CylinderGeometry(1.65, 1.65, 0.18, 32), silverDeckMat);
     agvPlatformB.add(platBDeck);
 
     const cardOnPlatB = createBareCardMesh(0xe65100, "PC-BAD-01");
@@ -1728,20 +1881,37 @@
     wristPivot.add(armJ5Orange);
 
     const kukaGripper = new THREE.Group();
-    kukaGripper.position.set(0, 0.4, 0);
+    kukaGripper.position.set(0, -0.15, 0);
     wristPivot.add(kukaGripper);
 
-    const gripBase = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.25, 16), new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9 }));
+    // 工業級消光黑圈基座 (保留黑圈)
+    const gripBase = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.45, 0.45, 0.18, 24),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9, roughness: 0.3 })
+    );
+    gripBase.position.y = 0.0;
     kukaGripper.add(gripBase);
 
+    // ★ 夾爪與吸盤全面改為「同天車垂直朝下（-Y）」！
     [[-0.65, 0.65], [0.65, 0.65], [-0.65, -0.65], [0.65, -0.65]].forEach(([cx, cz]) => {
-      const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.18, 0.35, 12), new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.8 }));
-      cup.position.set(cx, 0.2, cz);
+      const cup = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.16, 0.12, 0.28, 16),
+        new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.85 })
+      );
+      cup.position.set(cx, -0.20, cz);
       kukaGripper.add(cup);
+
+      const clawTip = new THREE.Mesh(
+        new THREE.BoxGeometry(0.12, 0.22, 0.12),
+        new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.95 })
+      );
+      clawTip.position.set(cx, -0.34, cz);
+      kukaGripper.add(clawTip);
     });
 
+    // 夾爪下方的實體卡片 (懸掛於黑圈與夾爪正下方，由上往下牢牢吸持)
     const cardOnGripper = createBareCardMesh(0x16a34a, "PC-IN-GRIPPER");
-    cardOnGripper.position.set(0, 0.45, 0);
+    cardOnGripper.position.set(0, -0.48, 0);
     cardOnGripper.visible = false;
     kukaGripper.add(cardOnGripper);
 
@@ -1767,7 +1937,8 @@
 
     let ohtMode = 'PATROL';
     let ohtLoopProgress = 0.0;
-    const OHT_PATROL_SPEED = 0.095;
+    const OHT_LINEAR_SPEED = 14.0; // 恆定標準工藝速度 (14 units/sec)
+    const OHT_PATROL_SPEED = 14.0 / 157.2; // 匹配閉環巡航角速度 (約 0.089/sec)
 
     if (typeof window.selectedTool === 'undefined') {
       window.selectedTool = 1;
@@ -2002,44 +2173,7 @@
       syncUI();
     }
 
-    function guideOhtToStockerStation(maxDuration = 1800) {
-      return new Promise(res => {
-        ohtMode = 'TASK';
-        const startU = ohtLoopProgress;
-        let deltaU = (startU <= 0.02) ? (1.0 - startU) : (1.0 - startU);
-        if (deltaU < 0.05) deltaU += 1.0;
-        const st = performance.now();
-        const duration = Math.max(600, deltaU * maxDuration);
-
-        function update() {
-          const now = performance.now();
-          const p = Math.min((now - st) / duration, 1);
-          const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
-          const currentU = (startU + deltaU * ease) % 1.0;
-          ohtLoopProgress = currentU;
-
-          const pt = ohtCurve.getPointAt(currentU);
-          ohtVehicle.position.copy(pt);
-          const tangent = ohtCurve.getTangentAt(currentU);
-          if (tangent.lengthSq() > 0.0001) {
-            const angle = Math.atan2(-tangent.z, tangent.x);
-            ohtVehicle.rotation.set(0, angle, 0);
-          }
-
-          if (p < 1) {
-            requestAnimationFrame(update);
-          } else {
-            ohtLoopProgress = 0.0;
-            ohtVehicle.position.set(-30, ohtRailHeight, railZ_LoadPort);
-            ohtVehicle.rotation.set(0, 0, 0);
-            res();
-          }
-        }
-        update();
-      });
-    }
-
-    // =========================================================================
+        // =========================================================================
     // 流程 A: Prober #01 SWAP 換卡全流程 (解耦非相依 ＋ 避門動線 ＋ 壞卡零瞬移)
     // =========================================================================
     async function runProber1SwapFlow() {
@@ -2090,7 +2224,7 @@
 
       // 4. ★【非相依解耦】：好卡就位洞口後，空箱立刻蓋合密閉，升降台與箱體【同步上升回庫】，開箱台立即清空！
       log('[A-4] ★【非相依獨立運作】好卡已在洞口！空箱降下密閉，升降台與箱體同步上升送回 Slot 01 備用 (深灰燈)！', 'log-green');
-      await lerpVector3(lidMesh, new THREE.Vector3(0, 0.85, 0), 400); // 密合一體方塊！
+      await lerpVector3(lidMesh, new THREE.Vector3(0, 0.45, 0), 400); // 密合一體方塊！
       lerpVector3(targetBox, new THREE.Vector3(-3.4, 8.6, 1.6), 700);
       await lerpVector3(elevatorCarriage, new THREE.Vector3(-3.4, 8.6, 1.6), 700);
       slotData[0].state = 'EMPTY_BOX';
@@ -2100,7 +2234,7 @@
       currentWorkcellBox = null;
 
       // 5. 【MR 車獨立取卡】：KUKA 手臂以娃娃機垂直朝下夾爪，自上方垂直下夾洞口好卡入頂部平台 A
-      log('[A-5] KUKA MR 車在洞口以【娃娃機垂直朝下夾爪】吸取好卡，放入車身頂部 Platform A！', 'log-orange');
+      log('[A-5] KUKA MR 車在洞口以【垂直朝下夾爪】吸取好卡，放入車身頂部 Platform A！', 'log-orange');
       await lerpVector3(agvVehicle, new THREE.Vector3(-10, 0, 13.6), 700);
 
       await setKukaArmPose(Math.PI / 2, 0.2, 0.8, -1.0, 500);
@@ -2116,10 +2250,10 @@
 
       setKukaRestPose();
 
-      // ★ 車載雙平台下沉切換：Platform A 下沉內縮至下層艙，空 Platform B 升至頂面！
+      // ★【SWAP 任務專屬】：等等要前往 Prober #01 退壞卡，因此執行收卡入內艙 Change！
+      // Platform A (好卡) 下沉內縮至下層艙，空 Platform B 升至頂面！
+      log('[A-6] ★【SWAP 換卡預備】好卡已安置，車載雙平台切換：好卡下沉內縮入車內下層艙，空 Platform B 升至頂面就位！', 'log-cyan');
       await switchKukaDecks('B');
-
-      log('[A-6] 良好針卡已下沉內縮至車身下層艙，空平台 B 就位，MR 車啟動出發！', 'log-cyan');
 
       // 6. MR 車出發前往 Prober #01 門外安全停等區 (Z = 6.0，完全避開開門路徑)
       await lerpVector3(agvVehicle, new THREE.Vector3(4.5, 0, 12), 900);
@@ -2231,7 +2365,7 @@
 
       // 15. 上蓋密合遮蔽，平台與箱體【同步垂直上升回庫】(Slot 05 亮紅燈)
       log('[A-17] ★ 上蓋降下扣緊【密合一體方塊，100% 遮蔽壞卡】！平台與箱體同步上升入庫！', 'log-green');
-      await lerpVector3(lid5, new THREE.Vector3(0, 0.85, 0), 400);
+      await lerpVector3(lid5, new THREE.Vector3(0, 0.45, 0), 400);
       lerpVector3(emptyBox5, new THREE.Vector3(-3.4, 11.8, 1.6), 800);
       await lerpVector3(elevatorCarriage, new THREE.Vector3(-3.4, 11.8, 1.6), 800);
 
@@ -2299,7 +2433,7 @@
 
       // 3. 好卡在洞口，空箱立刻密閉同步上升回庫！
       log('[B-4] ★ 好卡已在洞口！空箱立即降下密合，同步上升送回 Slot 04 備用 (深灰燈)！', 'log-green');
-      await lerpVector3(lidMesh, new THREE.Vector3(0, 0.85, 0), 400);
+      await lerpVector3(lidMesh, new THREE.Vector3(0, 0.45, 0), 400);
       lerpVector3(targetBox4, new THREE.Vector3(3.4, 10.2, 1.6), 700);
       await lerpVector3(elevatorCarriage, new THREE.Vector3(3.4, 10.2, 1.6), 700);
       slotData[3].state = 'EMPTY_BOX';
@@ -2309,7 +2443,7 @@
       currentWorkcellBox = null;
 
       // 4. MR 車下夾好卡入頂部平台 A
-      log('[B-5] KUKA MR 車娃娃機手爪自洞口由上往下吸取好卡，放入車身頂部平台 A！', 'log-orange');
+      log('[B-5] KUKA MR 車手臂在洞口以垂直朝下夾爪吸取好卡，放入車身頂部 Platform A！', 'log-orange');
       await lerpVector3(agvVehicle, new THREE.Vector3(-10, 0, 13.6), 700);
       await setKukaArmPose(Math.PI / 2, 0.2, 0.8, -1.0, 500);
       bareCardOnPortB.visible = false;
@@ -2322,8 +2456,8 @@
       syncUI();
       setKukaRestPose();
 
-      // 5. MR 車出發前往 Prober #02 安全停等區 (Z = 6.0)
-      log('[B-6] 卡片入槽、手臂收合，MR 車啟動行駛前往 Prober #02 安全停等區...', 'log-cyan');
+      // ★【非 SWAP 任務：卡片直接 Keep 在車頂上方 (Platform A)，不執行下沉內縮！】
+      log('[B-6] ★【非 SWAP 任務】好卡直接 Keep 在車頂上方 (Platform A)，MR 車啟動行駛前往 Prober #02...', 'log-cyan');
       await lerpVector3(agvVehicle, new THREE.Vector3(26.5, 0, 12), 1100);
       await lerpVector3(agvVehicle, new THREE.Vector3(26.5, 0, 6.0), 900);
 
@@ -2336,11 +2470,11 @@
       await lerpVector3(prober2.pccStageGroup, new THREE.Vector3(-2.0, 4.0, 5.8), 1600);
 
       // 8. 避門對位動線
-      log('[B-9] MR 車繞行避開門板，停靠至 Load Port 旁開闊位，手爪由上往下安裝好卡！', 'log-green');
+      log('[B-9] MR 車繞行避開門板，停靠至 Load Port 旁開闊位，手臂自車頂 Platform A 吸取好卡裝機！', 'log-green');
       await lerpVector3(agvVehicle, new THREE.Vector3(29.5, 0, 3.5), 600);
       await lerpVector3(agvVehicle, new THREE.Vector3(29.5, 0, 0.0), 600);
 
-      // 娃娃機手爪取好卡裝機
+      // 手臂自車頂 Platform A 取好卡裝機
       await setKukaArmPose(0.3, -0.1, 1.1, -1.0, 400);
       cardOnPlatformA_loaded = false;
       syncUI();
@@ -2373,37 +2507,92 @@
       syncUI();
     }
 
+function guideOhtToStockerStation() {
+      return new Promise(res => {
+        ohtMode = 'TASK';
+        const startU = ohtLoopProgress;
+        let deltaU = (startU <= 0.02) ? (1.0 - startU) : (1.0 - startU);
+        if (deltaU < 0.05) deltaU += 1.0;
+        const st = performance.now();
+        // 恆定標準工藝速度：不論是否有傳送命令，運轉速度保持一致！
+        const loopPerimeter = 157.2;
+        const targetDist = deltaU * loopPerimeter;
+        const duration = Math.max(800, (targetDist / OHT_LINEAR_SPEED) * 1000);
+
+        function update() {
+          const now = performance.now();
+          const p = Math.min((now - st) / duration, 1);
+          const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+          const currentU = (startU + deltaU * ease) % 1.0;
+          ohtLoopProgress = currentU;
+
+          const pt = ohtCurve.getPointAt(currentU);
+          ohtVehicle.position.copy(pt);
+          const tangent = ohtCurve.getTangentAt(currentU);
+          if (tangent.lengthSq() > 0.0001) {
+            const angle = Math.atan2(-tangent.z, tangent.x);
+            ohtVehicle.rotation.set(0, angle, 0);
+          }
+
+          if (p < 1) {
+            requestAnimationFrame(update);
+          } else {
+            ohtLoopProgress = 0.0;
+            ohtVehicle.position.set(-30, ohtRailHeight, railZ_LoadPort);
+            ohtVehicle.rotation.set(0, 0, 0);
+            res();
+          }
+        }
+        update();
+      });
+    }
+
     // =========================================================================
-    // OHT 天車直落吊送實體 FOUP 至指定機台
+    // OHT 天車直落吊送實體 FOUP 至指定機台 (恆定工藝速度 ｜ 剛性一體同動)
     // =========================================================================
     async function runOhtDeliveryToProber(targetProber, targetFoup, targetPortX, pName) {
       ohtIsBusy = true;
       syncUI();
       setModeText((currentLang === 'zh') ? `OHT 流程：天車自 Stocker 夾取實體 FOUP ➔ 直落 ${pName}` : `OHT: Delivering FOUP to ${pName}`);
-      log(`OHT: 接收到 ${pName} 綠燈可用信號，高速巡航天車 (娃娃車) 動態接單進站...`, 'log-cyan');
+      log(`OHT: 接收到 ${pName} 綠燈可用信號，天車依恆定工藝速度接單進站...`, 'log-cyan');
 
       await guideOhtToStockerStation();
 
-      // 實體 FOUP 垂直托升
+      // 實體 FOUP 垂直托升至頂部出料台 (Y = 15.5)
       log(`FOUP Stocker: 升降機將庫內實體 ${targetFoup.userData.name} 垂直托升至頂部出料台！`, 'log-cyan');
       await lerpVector3(targetFoup, new THREE.Vector3(-26, 15.5, railZ_LoadPort), 900);
       await sleep(100);
 
-      await lerpVector3(ohtVehicle, new THREE.Vector3(-26, ohtRailHeight, railZ_LoadPort), 300);
+      // 天車移至出料台正上方 (-26)
+      await lerpVector3(ohtVehicle, new THREE.Vector3(-26, ohtRailHeight, railZ_LoadPort), 400);
 
-      // 垂降夾取
+      // 垂降夾取：吊具下降至 Stocker 頂台 (Y = -8.1)
       log('OHT: 鋼索垂直直線下降，吊具四爪剛性鎖扣住 FOUP 頂部法蘭...', 'log-cyan');
-      await lerpVector3(ohtHoist, new THREE.Vector3(0, -5.3, 0), 700);
-      await sleep(100);
+      await lerpVector3(ohtHoist, new THREE.Vector3(0, -8.1, 0), 800);
+      await sleep(120);
 
-      targetFoup.position.set(-26, ohtRailHeight - 2.2, railZ_LoadPort);
-      await lerpVector3(ohtHoist, new THREE.Vector3(0, -1.1, 0), 700);
+      // 提升鎖定：吊具收回至 -2.8，FOUP 逐幀剛性鎖定提升至攜行位 (Y = 20.8)
+      const liftStockerDuration = 800;
+      const stLiftSt = performance.now();
+      await new Promise(res => {
+        function liftStockerLinear() {
+          const now = performance.now();
+          const p = Math.min((now - stLiftSt) / liftStockerDuration, 1);
+          const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+          ohtHoist.position.y = -8.1 + (-2.8 - (-8.1)) * ease;
+          targetFoup.position.y = 15.5 + (20.8 - 15.5) * ease;
+          if (p < 1) requestAnimationFrame(liftStockerLinear);
+          else res();
+        }
+        liftStockerLinear();
+      });
 
-      // 高速直行至 Load Port 正上方
-      log(`OHT: 載著 FOUP 沿直軌高速直行前往 ${pName} 正上方 (全程正對 Load Port 天軌)...`, 'log-orange');
+      // 恆定工藝速度直行前往 Load Port 正上方 (全程剛性同動，絕不脫節！)
+      log(`OHT: 載著 FOUP 沿天軌恆定勻速直行前往 ${pName} 正上方...`, 'log-orange');
       const startX = -26;
       const endX = targetPortX;
-      const travelDuration = 1200;
+      const dist = Math.abs(endX - startX);
+      const travelDuration = Math.round((dist / OHT_LINEAR_SPEED) * 1000);
       const st = performance.now();
 
       await new Promise(res => {
@@ -2413,24 +2602,24 @@
           const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
           const currX = startX + (endX - startX) * ease;
           ohtVehicle.position.set(currX, ohtRailHeight, railZ_LoadPort);
-          targetFoup.position.set(currX, ohtRailHeight - 2.2, railZ_LoadPort);
+          targetFoup.position.set(currX, 20.8, railZ_LoadPort);
           if (p < 1) requestAnimationFrame(moveLinear);
           else res();
         }
         moveLinear();
       });
 
-      // 垂直直降
-      log(`OHT: ★【完全無遮蔽 Load Port】鋼索正上方直線垂降，FOUP 清楚座落於 ${pName} 定位銷！`, 'log-cyan');
-      const dropDuration = 1000;
+      // 垂直直降：鋼索自 -2.8 垂降至 -18.2，FOUP 自 20.8 同步平降至 Load Port 定位銷 (Y = 5.4)！
+      log(`OHT: ★【完全無遮蔽 Load Port】鋼索垂直直線垂降，FOUP 穩健座落於 ${pName} 定位銷！`, 'log-cyan');
+      const dropDuration = 1100;
       const stDrop = performance.now();
       await new Promise(res => {
         function dropLinear() {
           const now = performance.now();
           const p = Math.min((now - stDrop) / dropDuration, 1);
           const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
-          const hoistY = -1.1 + (-15.5 - (-1.1)) * ease;
-          const foupY = (ohtRailHeight - 2.2) + (5.4 - (ohtRailHeight - 2.2)) * ease;
+          const hoistY = -2.8 + (-18.2 - (-2.8)) * ease;
+          const foupY = 20.8 + (5.4 - 20.8) * ease;
           ohtHoist.position.y = hoistY;
           targetFoup.position.y = foupY;
           if (p < 1) requestAnimationFrame(dropLinear);
@@ -2439,7 +2628,8 @@
         dropLinear();
       });
 
-      await lerpVector3(ohtHoist, new THREE.Vector3(0, -1.1, 0), 700);
+      // 吊具釋放，鋼索垂直收回
+      await lerpVector3(ohtHoist, new THREE.Vector3(0, -2.8, 0), 750);
 
       targetProber.status = 'TESTING';
       targetProber.hasFoup = true;
@@ -2453,7 +2643,9 @@
       syncUI();
     }
 
-    // OHT 退回 FOUP 至 Stocker
+    // =========================================================================
+    // OHT 退回 FOUP 至 Stocker (★ 修復：全程逐幀剛性鎖定同動，杜絕脫節與瞬移)
+    // =========================================================================
     async function runOhtReturnFromProber(targetProber, targetFoup, targetPortX, pName) {
       ohtIsBusy = true;
       syncUI();
@@ -2461,42 +2653,86 @@
 
       await guideOhtToStockerStation();
 
-      // 先飛至機台正上方
-      await lerpVector3(ohtVehicle, new THREE.Vector3(targetPortX, ohtRailHeight, railZ_LoadPort), 1200);
+      // 天車恆定勻速飛至機台 Load Port 正上方
+      const distToPort = Math.abs(targetPortX - (-26));
+      const flyDuration = Math.round((distToPort / OHT_LINEAR_SPEED) * 1000);
+      await lerpVector3(ohtVehicle, new THREE.Vector3(targetPortX, ohtRailHeight, railZ_LoadPort), flyDuration);
 
-      // 垂直下降夾取 FOUP
-      await lerpVector3(ohtHoist, new THREE.Vector3(0, -15.5, 0), 900);
-      targetFoup.position.set(targetPortX, ohtRailHeight - 2.2, railZ_LoadPort);
-      await lerpVector3(ohtHoist, new THREE.Vector3(0, -1.1, 0), 800);
+      // 垂直下降夾取 FOUP (鋼索降至 -18.2)
+      log('OHT: 吊具鋼索垂直直線下降至 Load Port 夾取 FOUP...', 'log-cyan');
+      await lerpVector3(ohtHoist, new THREE.Vector3(0, -18.2, 0), 1000);
+      await sleep(150);
+
+      // 吊具鎖定法蘭，啟動垂直提升：FOUP 與吊具【逐幀同步提升】，絕不脫節！
+      log('OHT: 吊具四爪鎖定法蘭，FOUP 與鋼索逐幀剛性同動提升至攜行位！', 'log-orange');
+      const liftDuration = 1000;
+      const stLift = performance.now();
+      await new Promise(res => {
+        function liftLinear() {
+          const now = performance.now();
+          const p = Math.min((now - stLift) / liftDuration, 1);
+          const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+          ohtHoist.position.y = -18.2 + (-2.8 - (-18.2)) * ease;
+          targetFoup.position.y = 5.4 + (20.8 - 5.4) * ease;
+          if (p < 1) requestAnimationFrame(liftLinear);
+          else res();
+        }
+        liftLinear();
+      });
 
       targetProber.hasFoup = false;
       targetProber.wafer.visible = false;
       targetProber.status = 'HAS_GOOD';
       syncUI();
 
-      // 飛回 Stocker 頂台
-      log(`OHT: 吊運 FOUP 飛回 FOUP Stocker 頂台...`, 'log-orange');
-      await lerpVector3(ohtVehicle, new THREE.Vector3(-26, ohtRailHeight, railZ_LoadPort), 1200);
-      targetFoup.position.set(-26, ohtRailHeight - 2.2, railZ_LoadPort);
+      // 水平恆定勻速返航：FOUP 與天車【逐幀剛性橫移】，全程緊隨車身正下方！
+      log('OHT: 載運退料 FOUP 恆定勻速返航 FOUP Stocker 頂台...', 'log-orange');
+      const returnDuration = Math.round((distToPort / OHT_LINEAR_SPEED) * 1000);
+      const stRet = performance.now();
+      await new Promise(res => {
+        function retLinear() {
+          const now = performance.now();
+          const p = Math.min((now - stRet) / returnDuration, 1);
+          const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+          const currX = targetPortX + (-26 - targetPortX) * ease;
+          ohtVehicle.position.set(currX, ohtRailHeight, railZ_LoadPort);
+          targetFoup.position.set(currX, 20.8, railZ_LoadPort);
+          if (p < 1) requestAnimationFrame(retLinear);
+          else res();
+        }
+        retLinear();
+      });
 
-      // 垂降置於頂台
-      await lerpVector3(ohtHoist, new THREE.Vector3(0, -5.3, 0), 700);
-      targetFoup.position.set(-26, 15.5, railZ_LoadPort);
-      await lerpVector3(ohtHoist, new THREE.Vector3(0, -1.1, 0), 600);
+      // 垂降置於 Stocker 頂台：FOUP 與吊具【逐幀同步平降至 Y = 15.5】
+      log('OHT: 吊具與 FOUP 剛性同步垂直垂降，平穩安座於 Stocker 頂部出入台！', 'log-cyan');
+      const dropStockerDuration = 800;
+      const stDrop = performance.now();
+      await new Promise(res => {
+        function dropStockerLinear() {
+          const now = performance.now();
+          const p = Math.min((now - stDrop) / dropStockerDuration, 1);
+          const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+          ohtHoist.position.y = -2.8 + (-8.1 - (-2.8)) * ease;
+          targetFoup.position.y = 20.8 + (15.5 - 20.8) * ease;
+          if (p < 1) requestAnimationFrame(dropStockerLinear);
+          else res();
+        }
+        dropStockerLinear();
+      });
+
+      // 吊爪鬆開，鋼索收回
+      await lerpVector3(ohtHoist, new THREE.Vector3(0, -2.8, 0), 700);
 
       // 庫內降回內部儲位
-      log(`FOUP Stocker: 升降機將晶圓盒收回內部庫位...`, 'log-cyan');
+      log('FOUP Stocker: 升降機將晶圓盒收回內部庫位...', 'log-cyan');
       await lerpVector3(targetFoup, new THREE.Vector3(-26, 6.5, railZ_LoadPort), 900);
 
       ohtMode = 'PATROL';
       ohtIsBusy = false;
       syncUI();
-      log(`★ ${pName} FOUP 退料入庫完成！`, 'log-green');
+      log(`★ ${pName} FOUP 退料入庫圓滿完成！`, 'log-green');
     }
 
-    // =========================================================================
-    // ★ 手動操作控制台三大按鈕處理函式 (具備嚴謹防呆互鎖與單一命令限制)
-    // =========================================================================
     window.handleManualFoup = async function() {
       if (ohtIsBusy) return;
       const targetProber = (window.selectedTool === 1) ? prober1 : prober2;
@@ -2599,7 +2835,7 @@
 
       ohtVehicle.position.set(-30, ohtRailHeight, railZ_LoadPort);
       ohtVehicle.rotation.set(0, 0, 0);
-      ohtHoist.position.set(0, -1.1, 0);
+      ohtHoist.position.set(0, -2.8, 0);
       ohtMode = 'PATROL';
       ohtLoopProgress = 0.0;
 
