@@ -2253,7 +2253,7 @@
       log('>>> 開始執行 Prober #01【tsmc 旗艦解耦 SWAP 換卡流程】<<<', 'log-cyan');
       log('========================================================', 'log-cyan');
 
-      // 1. PC Stocker 取 Slot 01 銀箱垂直降至開箱台 (升降台與箱體同步下降！)
+      // 1. PC Stocker 取 Slot 01 銀箱垂直降至開箱台
       log('[A-1] PC Stocker 升降機自【Slot 01】取好卡箱，平台與箱體同步下降至開箱台...', 'log-cyan');
       await lerpVector3(elevatorCarriage, new THREE.Vector3(-3.4, 8.6, 1.6), 600);
 
@@ -2268,13 +2268,13 @@
       }
       await lerpVector3(elevatorCarriage, new THREE.Vector3(0, 3.7, 1.6), 800);
 
-      // 2. 實體開蓋顯露：深罩上蓋垂直移開，露出乾淨下盒上的實體 PC 裸卡 (無灰色圓盤！)
-      log('[A-2] ★【真・開蓋顯露】深罩上蓋垂直升起，乾淨下盒上的實體 PC 裸卡清晰露出 (無灰色圓盤)！', 'log-green');
+      // 2. 實體開蓋顯露：深罩上蓋垂直移開
+      log('[A-2] ★【真・開蓋顯露】深罩上蓋垂直升起，露出下盒上的實體 PC 裸卡！', 'log-green');
       const lidMesh = targetBox.userData.lidMesh;
       await lerpVector3(lidMesh, new THREE.Vector3(0, 3.5, 0), 600);
 
-      // 3. Stocker 內建夾爪由上往下夾取裸卡，【剛性結合一體同動】提送至出口洞口 (Port B)
-      log('[A-3] ★【卡爪剛性同動】Stocker 內爪垂直下夾裸卡，卡爪一體平移提送至出口洞口 (Port B)！', 'log-cyan');
+      // 3. Stocker 內爪剛性提送好卡至出口 (Port B)
+      log('[A-3] ★【卡爪剛性同動】Stocker 內爪垂直下夾裸卡，平移提送至出口洞口 (Port B)！', 'log-cyan');
       await lerpVector3(stockerArmGroup, new THREE.Vector3(0, 4.4, 1.6), 500);
       if (targetBox.userData.innerCard) {
         targetBox.userData.innerCard.visible = false;
@@ -2289,9 +2289,9 @@
       bareCardOnPortB.children[0].material.color.setHex(0x16a34a);
       await lerpVector3(stockerArmGroup, new THREE.Vector3(0, 6.8, 1.6), 500);
 
-      // 4. ★【非相依解耦】：好卡就位洞口後，空箱立刻蓋合密閉，升降台與箱體【同步上升回庫】，開箱台立即清空！
-      log('[A-4] ★【非相依獨立運作】好卡已在洞口！空箱降下密閉，升降台與箱體同步上升送回 Slot 01 備用 (深灰燈)！', 'log-green');
-      await lerpVector3(lidMesh, new THREE.Vector3(0, 0.45, 0), 400); // 密合一體方塊！
+      // 4. 空箱密閉回庫
+      log('[A-4] ★ 好卡已在洞口！空箱降下套合密閉，同步上升送回 Slot 01 備用！', 'log-green');
+      await lerpVector3(lidMesh, new THREE.Vector3(0, 0.45, 0), 400);
       lerpVector3(targetBox, new THREE.Vector3(-3.4, 8.6, 1.6), 700);
       await lerpVector3(elevatorCarriage, new THREE.Vector3(-3.4, 8.6, 1.6), 700);
       slotData[0].state = 'EMPTY_BOX';
@@ -2300,125 +2300,166 @@
       await lerpVector3(elevatorCarriage, new THREE.Vector3(0, 3.7, 1.6), 500);
       currentWorkcellBox = null;
 
-      // 5. 【MR 車獨立取卡】：KUKA 手臂以娃娃機垂直朝下夾爪，自上方垂直下夾洞口好卡入頂部平台 A
-      log('[A-5] KUKA MR 車在洞口以【垂直朝下夾爪】吸取好卡，放入車身頂部 Platform A！', 'log-orange');
-      await lerpVector3(agvVehicle, new THREE.Vector3(-10, 0, 13.6), 700);
+      // 5. ★【MR 車精準對位停靠】：停靠至 Stocker Port B 正前方黃金工藝位 (X = -14.2)
+      log('[A-5] MR 車精準停靠至 Port B 正前方工作位 (X = -14.2)，徹底消除空間距離差！', 'log-orange');
+      await lerpVector3(agvVehicle, new THREE.Vector3(-14.2, 0, 13.6), 700);
 
-      // ★ 兩段式動作：手臂【先向左轉對位】➔【然後伸長取卡】(第三節筆直朝下，爪具張開)
-      log('[A-5] KUKA 手臂【先向左轉對位 ➔ 然後向前伸長】，第三節短臂引導圓盤夾爪垂直朝下！', 'log-orange');
+      // ★【標準 4 階段取卡上車 Flow (比照 Stocker 內爪模式)】：
+      // (1) 移到卡正上方 ➔ 下探合緊
+      log('[A-5-1] 手臂先移至 Port B 卡片正上方，第三節引導圓盤夾爪下探，四爪合緊抓牢！', 'log-cyan');
       await setGripperClawState('OPEN', 100);
-      await setKukaArmTwoStage(Math.PI / 2, 0.2, 0.8, 450, 550);
-
-      // 下探接觸瞬間，四爪向內合緊抓牢 (張開後合緊抓住感！)
-      log('[A-5] 圓盤夾爪接觸卡片，四向夾爪【向內縮扣夾緊】，卡片水平固定！', 'log-cyan');
+      await setKukaArmTwoStage(Math.PI / 2, 0.15, 0.75, 400, 450);
       await setGripperClawState('CLAMP', 250);
       bareCardOnPortB.visible = false;
       cardOnGripper.visible = true;
       cardOnGripper.children[0].material.color.setHex(0x16a34a);
 
-      // 垂直提昇並平移放入頂部平台 A (卡片全程水平不動)
-      await setKukaArmTwoStage(0, -0.1, 1.1, 450, 550);
+      // (2) 上抬 (垂直提升至安全高度)
+      log('[A-5-2] 手臂帶動好卡【垂直向上平穩上抬】，卡片全程保持絕對水平！', 'log-cyan');
+      await setKukaArmPose(Math.PI / 2, -0.15, 1.1, -0.95, 400);
+
+      // (3) 水平移動到車上位置
+      log('[A-5-3] 手臂維持安全高度，【水平平移】至車身頂部 Platform A 正上方！', 'log-cyan');
+      await setKukaArmPose(0, -0.15, 1.1, -0.95, 450);
+
+      // (4) 下放安座於車上
+      log('[A-5-4] 手爪垂直平降【下放安座】於車載平台，夾爪張開釋放！', 'log-green');
+      await setKukaArmPose(0, -0.05, 0.95, -0.90, 350);
       await setGripperClawState('OPEN', 200);
       cardOnGripper.visible = false;
       cardOnPlatformA_loaded = true;
       syncUI();
-
       setKukaRestPose();
 
       // ★【SWAP 任務專屬】：等等要前往 Prober #01 退壞卡，因此執行收卡入內艙 Change！
-      // Platform A (好卡) 下沉內縮至下層艙，空 Platform B 升至頂面！
-      log('[A-6] ★【SWAP 換卡預備】好卡已安置，車載雙平台切換：好卡下沉內縮入車內下層艙，空 Platform B 升至頂面就位！', 'log-cyan');
+      log('[A-6] ★【SWAP 換卡預備】好卡已安座，車載雙平台切換：好卡下沉內縮入下層艙，空 Platform B 升至頂面！', 'log-cyan');
       await switchKukaDecks('B');
 
-      // 6. MR 車出發前往 Prober #01 門外安全停等區 (Z = 6.0，完全避開開門路徑)
-      await lerpVector3(agvVehicle, new THREE.Vector3(4.5, 0, 12), 900);
-      await lerpVector3(agvVehicle, new THREE.Vector3(4.5, 0, 6.0), 900);
+      // 6. MR 車出發前往 Prober #01 安全停等區 (避開門板路徑)
+      await lerpVector3(agvVehicle, new THREE.Vector3(4.5, 0, 12), 800);
+      await lerpVector3(agvVehicle, new THREE.Vector3(4.5, 0, 4.0), 700);
 
-      // 7. ★【0.5x 慢動作開門】：TEL Prexa 純白門向外旋轉 90 度敞開 (1,600ms)！露出深黑內部暗室！
-      log('[A-7] ★【0.5x 慢動作開門】TEL Prexa #01 正面純白門向外旋轉 90 度敞開 (1,600ms)！露出深黑內部暗室！', 'log-cyan');
+      // 7. ★ 0.5x 慢動作開門
+      log('[A-7] ★ TEL Prexa #01 正面純白門向外旋轉 90 度敞開 (1,600ms)！露出深黑暗室！', 'log-cyan');
       await lerpRotationY(prober1.doorHingePivot, -Math.PI / 2, 1600);
 
-      // 8. ★【光碟機式吐盤 0.5x 慢動作】：雙導軌載台自內部黑色暗室腔體，如光碟機托盤般滑出 (1,600ms)！
-      log('[A-8] ★【光碟機托盤吐出】雙導軌電動滑台自深黑暗腔內部平滑吐出 (1,600ms)！', 'log-cyan');
+      // 8. ★ 0.5x 慢動作光碟機吐盤
+      log('[A-8] ★ 雙導軌電動滑台自深黑暗腔內部平滑吐出 (1,600ms)！', 'log-cyan');
       await lerpVector3(prober1.pccStageGroup, new THREE.Vector3(-2.0, 4.0, 5.8), 1600);
 
-      // 9. ★【避門對位動線】：MR 車繞過開門門板，平順駛至 Load Port 側開闊作業位 (X = 7.5, Z = 0)！
-      log('[A-9] ★【避門動線】MR 車繞行避開門板，平穩停靠至右側 Load Port 前方開闊作業位！', 'log-cyan');
-      await lerpVector3(agvVehicle, new THREE.Vector3(7.5, 0, 3.5), 600);
-      await lerpVector3(agvVehicle, new THREE.Vector3(7.5, 0, 0.0), 600);
+      // 9. ★【Prober 停靠工藝位校正 (X = 5.6, Z = -2.6)】：
+      // 車載托盤 (4.4, -2.6) 與機台滑台 (4.5, -4.7) 同軸對齊，間距僅 2.1 單位，徹底消除空間斷裂！
+      log('[A-9] MR 車平穩停靠至機台黃金工藝位 (X = 5.6, Z = -2.6)，同軸完美對齊！', 'log-cyan');
+      await lerpVector3(agvVehicle, new THREE.Vector3(5.6, 0, 1.0), 600);
+      await lerpVector3(agvVehicle, new THREE.Vector3(5.6, 0, -2.6), 600);
 
-      // 10. 【娃娃機 SWAP 動作】：
-      // (1) 手爪由上往下夾退壞卡 ➔ 放入頂部 Platform B
-      log('[A-10 SWAP] KUKA 手臂【先左轉對向滑台 ➔ 伸長取壞卡】，第三節引導夾爪張開下探！', 'log-orange');
+      // 10. ★【SWAP 動作 A：自機台滑台取退壞卡 (標準 4 階段)】：
+      // (1) 移到機台滑台壞卡正上方 ➔ 下探合緊
+      log('[A-10-1] 手臂先移至滑台壞卡正上方，第三節垂直下探，四爪合緊咬合壞卡！', 'log-orange');
       await setGripperClawState('OPEN', 100);
-      await setKukaArmTwoStage(-0.3, 0.2, 0.9, 400, 500);
+      await setKukaArmTwoStage(-Math.PI / 2, 0.15, 0.75, 400, 450);
       await setGripperClawState('CLAMP', 250);
       prober1.installedCard.visible = false;
       cardOnGripper.visible = true;
       cardOnGripper.children[0].material.color.setHex(0xe65100);
 
-      // 放回頂部 Platform B
-      await setKukaArmTwoStage(0.3, -0.1, 1.1, 400, 500);
+      // (2) 上抬 (垂直提升)
+      log('[A-10-2] 手臂垂直向上拔起上抬，壞卡全程嚴格保持水平！', 'log-orange');
+      await setKukaArmPose(-Math.PI / 2, -0.15, 1.1, -0.95, 400);
+
+      // (3) 水平移動到車上位置
+      log('[A-10-3] 手臂帶動壞卡【水平平移】至車頂 Platform B 正上方！', 'log-orange');
+      await setKukaArmPose(0, -0.15, 1.1, -0.95, 450);
+
+      // (4) 下放安座於 Platform B
+      log('[A-10-4] 垂直下放安座於車載壞卡台，夾爪張開釋放！', 'log-green');
+      await setKukaArmPose(0, -0.05, 0.95, -0.90, 350);
       await setGripperClawState('OPEN', 200);
       cardOnGripper.visible = false;
       cardOnPlatformB_loaded = true;
       syncUI();
+      setKukaRestPose();
 
-      // (2) 車內升降切換：載壞卡的 Platform B 下沉，載好卡的 Platform A 升至頂面！
+      // ★ 車內升降切換：載壞卡的 Platform B 下沉，載好卡的 Platform A 升至頂面！
+      log('[A-10-5] 車載雙平台切換：壞卡下沉，好卡升至頂面就位！', 'log-cyan');
       await switchKukaDecks('A');
 
-      // (3) 手臂【先轉向 Platform A ➔ 伸長合緊抓取好卡 ➔ 轉向機台 ➔ 伸展安裝】
-      log('[A-11 SWAP] 手臂先轉向車頂 Platform A，伸長【向內扣緊好卡】，精準水平安裝至機台滑台！', 'log-green');
+      // ★【SWAP 動作 B：自車上取好卡裝上機台滑台 (標準 4 階段)】：
+      // (1) 移至車上 Platform A 好卡正上方 ➔ 下探合緊
+      log('[A-11-1] 手爪移至車頂 Platform A 正上方下探，向內扣緊好卡！', 'log-green');
       await setGripperClawState('OPEN', 100);
-      await setKukaArmTwoStage(0.3, -0.1, 1.1, 350, 450);
+      await setKukaArmPose(0, -0.05, 0.95, -0.90, 350);
       await setGripperClawState('CLAMP', 250);
       cardOnPlatformA_loaded = false;
       syncUI();
       cardOnGripper.visible = true;
       cardOnGripper.children[0].material.color.setHex(0x16a34a);
 
-      await setKukaArmTwoStage(-0.3, 0.2, 0.9, 400, 500);
+      // (2) 上抬
+      log('[A-11-2] 好卡垂直向上平穩上抬至安全高度！', 'log-green');
+      await setKukaArmPose(0, -0.15, 1.1, -0.95, 400);
+
+      // (3) 水平移動到機台滑台位置
+      log('[A-11-3] 手臂帶好卡【水平平移】至機台滑台正上方！', 'log-green');
+      await setKukaArmPose(-Math.PI / 2, -0.15, 1.1, -0.95, 450);
+
+      // (4) 下放裝機
+      log('[A-11-4] 手爪垂直平降【下放安座】於機台定位銷，夾爪張開完成裝機！', 'log-green');
+      await setKukaArmPose(-Math.PI / 2, 0.15, 0.75, -0.90, 350);
       await setGripperClawState('OPEN', 200);
       cardOnGripper.visible = false;
       prober1.installedCard.visible = true;
       prober1.installedCard.children[0].material.color.setHex(0x16a34a);
-
       setKukaRestPose();
 
-      // 11. 滑台縮回深黑暗室 (1,600ms)，MR 車倒退避讓，白門閉合鎖固 (1,400ms)！
-      log('[A-12] 滑台載好卡縮回深黑暗室 (1,600ms)，MR 車倒退避讓，白門旋轉閉合 (1,400ms)！轉綠燈！', 'log-cyan');
+      // 11. 滑台縮回深黑暗室，MR 車倒退避讓，白門閉合轉綠
+      log('[A-12] 滑台縮回深黑暗室 (1,600ms)，MR 車倒退避讓，白門閉合！轉綠燈！', 'log-cyan');
       const retractStagePromise = lerpVector3(prober1.pccStageGroup, new THREE.Vector3(-2.0, 4.0, 0.5), 1600);
-      await lerpVector3(agvVehicle, new THREE.Vector3(7.5, 0, 6.0), 800);
+      await lerpVector3(agvVehicle, new THREE.Vector3(5.6, 0, 4.0), 800);
       await retractStagePromise;
       await lerpRotationY(prober1.doorHingePivot, 0, 1400);
 
       prober1.status = 'HAS_GOOD';
       syncUI();
 
-      // 12. ★【非相依並行雙線運作】：OHT 天車直落送 FOUP 1 ；MR 車同時載壞卡返航 Stocker！
+      // 12. 平行雙線：OHT 送 FOUP 1 ；MR 車載壞卡返航 Stocker
       log('★【雙系統非相依平行運作】：OHT 天車直降派送 FOUP 1 ｜ MR 車同時載壞卡返航！', 'log-green');
       const ohtDeliveryPromise = runOhtDeliveryToProber(prober1, foup1, 6.5 + 2.8, "Prober #01");
 
-      // MR 車切換壞卡平台 B 至頂面，返航 PC Stocker
+      // MR 車切換壞卡平台 B 至頂面，返航 PC Stocker 黃金對位點 (X = -14.2)
       await switchKukaDecks('B');
-      log('[A-13] MR 車載著壞卡返航 PC Stocker 出入口...', 'log-orange');
-      await lerpVector3(agvVehicle, new THREE.Vector3(-10, 0, 13.6), 1200);
+      log('[A-13] MR 車載著壞卡返航 PC Stocker 出入口工作位 (X = -14.2)...', 'log-orange');
+      await lerpVector3(agvVehicle, new THREE.Vector3(-14.2, 0, 13.6), 1100);
 
-      // 13. ★【壞卡零瞬移回庫】：MR 車手爪先將壞卡放置到入口處 (Port B)，才呼叫空箱！
-      log('[A-14] ★【零瞬移物理因果】MR 車手爪自頂部 Platform B 夾取壞卡，放置於【入口洞口 Port B】！', 'log-cyan');
-      await setKukaArmPose(Math.PI / 2, 0.2, 0.8, -1.0, 500);
+      // 13. ★【退壞卡至 Port B (標準 4 階段)】：
+      // (1) 移至車上 Platform B 壞卡正上方 ➔ 下探合緊
+      log('[A-14-1] 手爪移至車頂 Platform B 壞卡正上方下探，向內扣緊壞卡！', 'log-cyan');
+      await setGripperClawState('OPEN', 100);
+      await setKukaArmPose(0, -0.05, 0.95, -0.90, 350);
+      await setGripperClawState('CLAMP', 250);
       cardOnPlatformB_loaded = false;
       syncUI();
       cardOnGripper.visible = true;
       cardOnGripper.children[0].material.color.setHex(0xe65100);
 
+      // (2) 上抬
+      await setKukaArmPose(0, -0.15, 1.1, -0.95, 400);
+
+      // (3) 水平移動到 Port B 正上方
+      log('[A-14-2] 手臂帶動壞卡【水平平移】至 Port B 正上方！', 'log-cyan');
+      await setKukaArmPose(Math.PI / 2, -0.15, 1.1, -0.95, 450);
+
+      // (4) 下放安座於 Port B
+      log('[A-14-3] 垂直平降【下放安座】於 Port B 出入口，夾爪張開釋放！', 'log-cyan');
+      await setKukaArmPose(Math.PI / 2, 0.15, 0.75, -0.90, 350);
+      await setGripperClawState('OPEN', 200);
       bareCardOnPortB.visible = true;
       bareCardOnPortB.children[0].material.color.setHex(0xe65100);
       cardOnGripper.visible = false;
       setKukaRestPose();
 
-      // 14. ★【卡置入口後，才呼叫空箱出庫】：升降台載空箱【同步下降定位】➔ 開蓋 ➔ 內爪夾卡進箱！
-      log('[A-15] ★【呼叫空箱】壞卡就位入口！Stocker 取【Slot 05 空箱】，平台與箱體同步下降至工作台定位！', 'log-cyan');
+      // 14. Stocker 內爪收壞卡入箱
+      log('[A-15] 壞卡就位入口！Stocker 取 Slot 05 空箱下降定位，內爪夾卡進箱...', 'log-cyan');
       await lerpVector3(elevatorCarriage, new THREE.Vector3(-3.4, 11.8, 1.6), 600);
       const emptyBox5 = slotMeshList[4].userData.boxMesh;
       if (emptyBox5) {
@@ -2430,13 +2471,12 @@
       const lid5 = emptyBox5.userData.lidMesh;
       await lerpVector3(lid5, new THREE.Vector3(0, 3.5, 0), 500);
 
-      // Stocker 內爪平移至 Port B 下夾壞卡 ➔ 剛性同動放進下盒！
       await lerpVector3(stockerArmGroup, new THREE.Vector3(8.2, 4.4, 1.6), 600);
       bareCardOnPortB.visible = false;
       cardInStockerClaw.visible = true;
       cardInStockerClaw.children[0].material.color.setHex(0xe65100);
 
-      log('[A-16] Stocker 內爪帶著壞卡剛性平移至空箱上方，垂直下放安座於下盒！', 'log-green');
+      log('[A-16] Stocker 內爪帶著壞卡平移放進下盒！', 'log-green');
       await lerpVector3(stockerArmGroup, new THREE.Vector3(0, 4.4, 1.6), 700);
       cardInStockerClaw.visible = false;
       if (emptyBox5.userData.innerCard) {
@@ -2445,8 +2485,8 @@
       }
       await lerpVector3(stockerArmGroup, new THREE.Vector3(0, 6.8, 1.6), 400);
 
-      // 15. 上蓋密合遮蔽，平台與箱體【同步垂直上升回庫】(Slot 05 亮紅燈)
-      log('[A-17] ★ 上蓋降下扣緊【密合一體方塊，100% 遮蔽壞卡】！平台與箱體同步上升入庫！', 'log-green');
+      // 15. 上蓋完全套合 Overlap 下盒，升降台同步上升回庫
+      log('[A-17] ★ 上蓋降下完全套合 Overlap 下盒側壁！平台與箱體同步上升入庫！', 'log-green');
       await lerpVector3(lid5, new THREE.Vector3(0, 0.45, 0), 400);
       lerpVector3(emptyBox5, new THREE.Vector3(-3.4, 11.8, 1.6), 800);
       await lerpVector3(elevatorCarriage, new THREE.Vector3(-3.4, 11.8, 1.6), 800);
@@ -2468,7 +2508,7 @@
     }
 
     // =========================================================================
-    // 流程 B: Prober #02 新卡裝載流程 (出卡至洞口 ➔ 空箱回庫 ➔ 娃娃機下夾 ➔ 避門裝卡 ➔ 轉綠)
+    // 流程 B: Prober #02 新卡裝載流程 (無斷裂連續物理軌跡 ｜ 卡片 Keep 車頂)
     // =========================================================================
     async function runProber2InstallFlow() {
       if (isBusy || mrIsBusy) return;
@@ -2497,7 +2537,7 @@
       const lidMesh = targetBox4.userData.lidMesh;
       await lerpVector3(lidMesh, new THREE.Vector3(0, 3.5, 0), 600);
 
-      // Stocker 內爪將好卡平移提送至【出口洞口 Port B】(剛性同動)
+      // Stocker 內爪將好卡平移提送至【出口洞口 Port B】
       log('[B-3] Stocker 內爪垂直下夾好卡，剛性平移提送至【出口洞口 Port B】！', 'log-cyan');
       await lerpVector3(stockerArmGroup, new THREE.Vector3(0, 4.4, 1.6), 500);
       if (targetBox4.userData.innerCard) {
@@ -2513,8 +2553,8 @@
       bareCardOnPortB.children[0].material.color.setHex(0x16a34a);
       await lerpVector3(stockerArmGroup, new THREE.Vector3(0, 6.8, 1.6), 500);
 
-      // 3. 好卡在洞口，空箱立刻密閉同步上升回庫！
-      log('[B-4] ★ 好卡已在洞口！空箱立即降下密合，同步上升送回 Slot 04 備用 (深灰燈)！', 'log-green');
+      // 3. 空箱密閉回庫
+      log('[B-4] ★ 好卡已在洞口！空箱立即降下完全套合 Overlap 下盒，同步上升回庫！', 'log-green');
       await lerpVector3(lidMesh, new THREE.Vector3(0, 0.45, 0), 400);
       lerpVector3(targetBox4, new THREE.Vector3(3.4, 10.2, 1.6), 700);
       await lerpVector3(elevatorCarriage, new THREE.Vector3(3.4, 10.2, 1.6), 700);
@@ -2524,19 +2564,30 @@
       await lerpVector3(elevatorCarriage, new THREE.Vector3(0, 3.7, 1.6), 500);
       currentWorkcellBox = null;
 
-      // 4. MR 車下夾好卡入頂部平台 A
-      log('[B-5] KUKA MR 車手臂在洞口以垂直朝下夾爪吸取好卡，放入車身頂部 Platform A！', 'log-orange');
-      await lerpVector3(agvVehicle, new THREE.Vector3(-10, 0, 13.6), 700);
-      // ★ 兩段式動作：手臂【先向左轉對位】➔【然後伸長取卡】(第三節短臂垂直朝下)
-      log('[B-5] 手臂【先向左轉 ➔ 然後向前伸長】，第三節引導圓盤夾爪垂直朝下！', 'log-orange');
+      // 4. MR 車精準對位停靠至 Port B 正前方工作位 (X = -14.2)
+      log('[B-5] MR 車精準停靠至 Port B 工作位 (X = -14.2)，手臂就近取卡！', 'log-orange');
+      await lerpVector3(agvVehicle, new THREE.Vector3(-14.2, 0, 13.6), 700);
+
+      // ★ 取好卡上車 (標準 4 階段：移至正上方 ➔ 下探合緊 ➔ 上抬 ➔ 水平移動 ➔ 下放)
+      log('[B-5-1] 手臂移至 Port B 好卡正上方，第三節引導下探，四爪合緊扣牢！', 'log-orange');
       await setGripperClawState('OPEN', 100);
-      await setKukaArmTwoStage(Math.PI / 2, 0.2, 0.8, 450, 550);
+      await setKukaArmTwoStage(Math.PI / 2, 0.15, 0.75, 400, 450);
       await setGripperClawState('CLAMP', 250);
       bareCardOnPortB.visible = false;
       cardOnGripper.visible = true;
       cardOnGripper.children[0].material.color.setHex(0x16a34a);
 
-      await setKukaArmTwoStage(0, -0.1, 1.1, 450, 550);
+      // 上抬
+      log('[B-5-2] 手臂垂直向上拔起上抬，好卡全程嚴格水平！', 'log-orange');
+      await setKukaArmPose(Math.PI / 2, -0.15, 1.1, -0.95, 400);
+
+      // 水平平移至車上 Platform A
+      log('[B-5-3] 手臂帶動好卡【水平平移】至車頂 Platform A 正上方！', 'log-orange');
+      await setKukaArmPose(0, -0.15, 1.1, -0.95, 450);
+
+      // 下放安座
+      log('[B-5-4] 垂直下放安座於車載平台，夾爪張開釋放！', 'log-green');
+      await setKukaArmPose(0, -0.05, 0.95, -0.90, 350);
       await setGripperClawState('OPEN', 200);
       cardOnGripper.visible = false;
       cardOnPlatformA_loaded = true;
@@ -2546,7 +2597,7 @@
       // ★【非 SWAP 任務：卡片直接 Keep 在車頂上方 (Platform A)，不執行下沉內縮！】
       log('[B-6] ★【非 SWAP 任務】好卡直接 Keep 在車頂上方 (Platform A)，MR 車啟動行駛前往 Prober #02...', 'log-cyan');
       await lerpVector3(agvVehicle, new THREE.Vector3(26.5, 0, 12), 1100);
-      await lerpVector3(agvVehicle, new THREE.Vector3(26.5, 0, 6.0), 900);
+      await lerpVector3(agvVehicle, new THREE.Vector3(26.5, 0, 4.0), 800);
 
       // 6. 0.5x 慢動作開門
       log('[B-7] Prober #02 正面純白門向外旋轉 90 度敞開 (1,600ms)！露出內部深黑暗室！', 'log-cyan');
@@ -2556,40 +2607,50 @@
       log('[B-8] 光碟機式空滑台自深黑暗腔平滑吐出 (1,600ms)！', 'log-cyan');
       await lerpVector3(prober2.pccStageGroup, new THREE.Vector3(-2.0, 4.0, 5.8), 1600);
 
-      // 8. 避門對位動線
-      log('[B-9] MR 車繞行避開門板，停靠至 Load Port 旁開闊位，手臂自車頂 Platform A 吸取好卡裝機！', 'log-green');
-      await lerpVector3(agvVehicle, new THREE.Vector3(29.5, 0, 3.5), 600);
-      await lerpVector3(agvVehicle, new THREE.Vector3(29.5, 0, 0.0), 600);
+      // 8. ★【Prober #02 停靠工藝位校正 (X = 27.6, Z = -2.6)】：同軸完美對齊！
+      log('[B-9] MR 車平穩停靠至機台黃金工藝位 (X = 27.6, Z = -2.6)，完全消除空間斷裂！', 'log-green');
+      await lerpVector3(agvVehicle, new THREE.Vector3(27.6, 0, 1.0), 600);
+      await lerpVector3(agvVehicle, new THREE.Vector3(27.6, 0, -2.6), 600);
 
-      // 手臂自車頂 Platform A 取好卡裝機：【先向右轉對準車載台 ➔ 伸長扣緊 ➔ 轉向機台 ➔ 伸長安裝】
-      log('[B-9] MR 車就位，手臂先轉向車頂 Platform A 伸長扣緊，再轉向機台水平裝載！', 'log-green');
+      // ★【自車上取好卡裝上機台滑台 (標準 4 階段：移至正上方 ➔ 下探合緊 ➔ 上抬 ➔ 水平移動 ➔ 下放)】：
+      // (1) 移至車上 Platform A 好卡正上方 ➔ 下探合緊
+      log('[B-9-1] 手爪移至車頂 Platform A 正上方下探，向內扣緊好卡！', 'log-green');
       await setGripperClawState('OPEN', 100);
-      await setKukaArmTwoStage(0.3, -0.1, 1.1, 350, 450);
+      await setKukaArmPose(0, -0.05, 0.95, -0.90, 350);
       await setGripperClawState('CLAMP', 250);
       cardOnPlatformA_loaded = false;
       syncUI();
       cardOnGripper.visible = true;
       cardOnGripper.children[0].material.color.setHex(0x16a34a);
 
-      await setKukaArmTwoStage(-0.3, 0.2, 0.9, 400, 500);
+      // (2) 上抬
+      log('[B-9-2] 好卡垂直向上平穩上抬至安全高度！', 'log-green');
+      await setKukaArmPose(0, -0.15, 1.1, -0.95, 400);
+
+      // (3) 水平移動到機台滑台正上方
+      log('[B-9-3] 手臂帶好卡【水平平移】至機台滑台正上方！', 'log-green');
+      await setKukaArmPose(-Math.PI / 2, -0.15, 1.1, -0.95, 450);
+
+      // (4) 下放裝機
+      log('[B-9-4] 手爪垂直平降【下放安座】於機台定位銷，夾爪張開完成裝機！', 'log-green');
+      await setKukaArmPose(-Math.PI / 2, 0.15, 0.75, -0.90, 350);
       await setGripperClawState('OPEN', 200);
       cardOnGripper.visible = false;
       prober2.installedCard.visible = true;
       prober2.installedCard.children[0].material.color.setHex(0x16a34a);
-
       setKukaRestPose();
 
-      // 9. 滑台縮回，MR 車倒退，白門閉合，轉綠燈！
+      // 9. 滑台縮回深黑暗室，MR 車倒退避讓，白門閉合轉綠
       log('[B-10] 滑台縮回深黑暗室 (1,600ms)，MR 車倒退避讓，白門閉合 (1,400ms)！轉綠燈！', 'log-cyan');
       const retractStage2Promise = lerpVector3(prober2.pccStageGroup, new THREE.Vector3(-2.0, 4.0, 0.5), 1600);
-      await lerpVector3(agvVehicle, new THREE.Vector3(29.5, 0, 6.0), 800);
+      await lerpVector3(agvVehicle, new THREE.Vector3(27.6, 0, 4.0), 800);
       await retractStage2Promise;
       await lerpRotationY(prober2.doorHingePivot, 0, 1400);
 
       prober2.status = 'HAS_GOOD';
       syncUI();
 
-      await lerpVector3(agvVehicle, new THREE.Vector3(-6, 0, 12), 1400);
+      await lerpVector3(agvVehicle, new THREE.Vector3(-6, 0, 12), 1200);
       log('★ Prober #02 空機送好卡作業圓滿完成！MR 車返回待命！', 'log-green');
 
       setModeText(i18n[currentLang].standby);
@@ -2598,7 +2659,7 @@
       syncUI();
     }
 
-function guideOhtToStockerStation() {
+    function guideOhtToStockerStation() {
       return new Promise(res => {
         ohtMode = 'TASK';
         const startU = ohtLoopProgress;
