@@ -1866,9 +1866,23 @@
     upperArm.castShadow = true;
     shoulderPivot.add(upperArm);
 
+    // ★【大臂與小臂間緊鄰雙關節機構 (Dual-Axis Elbow Mechanism)】
+    // 關節 1：大臂頂端旋轉/偏擺關節 (Elbow Swivel/Yaw Joint) - 允許小臂側向偏擺轉向
+    const elbowSwivelPivot = new THREE.Group();
+    elbowSwivelPivot.position.set(0, 2.8, 0);
+    shoulderPivot.add(elbowSwivelPivot);
+
+    const elbowSwivelRing = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.48, 0.48, 0.16, 24),
+      new THREE.MeshStandardMaterial({ color: 0xff5722, metalness: 0.7, roughness: 0.25 })
+    );
+    elbowSwivelRing.position.set(0, -0.08, 0);
+    elbowSwivelPivot.add(elbowSwivelRing);
+
+    // 關節 2：緊鄰之肘部俯仰屈伸關節 (Elbow Pitch Joint) - 經典橘色大球體關節，控制小臂前後屈伸
     const elbowPivot = new THREE.Group();
-    elbowPivot.position.set(0, 2.8, 0);
-    shoulderPivot.add(elbowPivot);
+    elbowPivot.position.set(0, 0, 0);
+    elbowSwivelPivot.add(elbowPivot);
 
     const armJ3Orange = new THREE.Mesh(new THREE.SphereGeometry(0.50, 20, 20), new THREE.MeshStandardMaterial({ color: 0xff5722, metalness: 0.6, roughness: 0.3 }));
     elbowPivot.add(armJ3Orange);
@@ -2196,13 +2210,14 @@
       });
     }
 
-    function setKukaArmPose(baseRot, shoulderRotX, elbowRotX, wristRotX, duration = 500) {
+    function setKukaArmPose(baseRot, shoulderRotX, elbowRotX, wristRotX, duration = 450, elbowYaw = 0) {
       return new Promise(res => {
         const st = performance.now();
         const sJ1 = kukaArmRoot.rotation.y;
         const sJ2 = shoulderPivot.rotation.x;
         const sJ3 = elbowPivot.rotation.x;
         const sJ4 = wristPivot.rotation.x;
+        const sJ_ey = elbowSwivelPivot.rotation.y;
         const targetJ4 = (wristRotX !== undefined && wristRotX !== null) ? wristRotX : -(shoulderRotX + elbowRotX);
 
         function update() {
@@ -2214,6 +2229,7 @@
           shoulderPivot.rotation.x = sJ2 + (shoulderRotX - sJ2) * ease;
           elbowPivot.rotation.x = sJ3 + (elbowRotX - sJ3) * ease;
           wristPivot.rotation.x = sJ4 + (targetJ4 - sJ4) * ease;
+          elbowSwivelPivot.rotation.y = sJ_ey + (elbowYaw - sJ_ey) * ease;
 
           if (p < 1) requestAnimationFrame(update);
           else res();
@@ -2222,17 +2238,17 @@
       });
     }
 
-    // ★【兩段階梯式取放動作】：先向左/向目標旋轉對位 ➔ 再伸長大臂小臂取卡 (第三節短臂自動補償垂直朝下)
-    async function setKukaArmTwoStage(baseRot, shoulderRotX, elbowRotX, durationRot = 450, durationExtend = 550) {
+    // ★【兩段階梯式取放動作】：先旋轉對位 ➔ 再伸長大臂小臂取卡 (第三節短臂自動補償垂直朝下)
+    async function setKukaArmTwoStage(baseRot, shoulderRotX, elbowRotX, durationRot = 400, durationExtend = 450, elbowYaw = 0) {
       // 第一段：手臂維持小幅度姿態，基座 J1 率先獨立轉向對位 (先轉向)
       const curJ2 = shoulderPivot.rotation.x;
       const curJ3 = elbowPivot.rotation.x;
       const curJ4 = wristPivot.rotation.x;
-      await setKukaArmPose(baseRot, curJ2, curJ3, curJ4, durationRot);
+      await setKukaArmPose(baseRot, curJ2, curJ3, curJ4, durationRot, elbowYaw);
 
       // 第二段：大臂小臂向前伸長展開 (然後伸長)，第三節自動計算反向補償角保持 100% 筆直垂直向下
       const targetJ4 = -(shoulderRotX + elbowRotX);
-      await setKukaArmPose(baseRot, shoulderRotX, elbowRotX, targetJ4, durationExtend);
+      await setKukaArmPose(baseRot, shoulderRotX, elbowRotX, targetJ4, durationExtend, elbowYaw);
     }
 
     // ★ 車載雙平台「下沉內縮 ＋ 升起切換」動畫
@@ -2321,25 +2337,25 @@
       await lerpVector3(agvVehicle, new THREE.Vector3(-15.8, 0, 13.6), 700);
 
       // ★【標準 4 階段取卡上車 Flow (比照 Stocker 內爪模式)】：
-      // (1) 移到卡正上方 ➔ 下探合緊
-      log('[A-5-1] 手臂先移至 Port B 卡片正上方，第三節引導圓盤夾爪下探，四爪合緊抓牢！', 'log-cyan');
+      // (1) 移到卡正上方 ➔ 垂直下探扣緊
+      log('[A-5-1] 肘部雙關節導引手臂至 Port B 正上方，手爪垂直下探，四爪向內扣緊！', 'log-cyan');
       await setGripperClawState('OPEN', 100);
-      await setKukaArmTwoStage(-Math.PI / 2, 0.22, 0.82, 400, 450);
+      await setKukaArmTwoStage(-Math.PI / 2, 0.22, 0.82, 380, 420);
       await setGripperClawState('CLAMP', 250);
       bareCardOnPortB.visible = false;
       cardOnGripper.visible = true;
       cardOnGripper.children[0].material.color.setHex(0x16a34a);
 
-      // (2) 上抬 (垂直提升至安全高度)
-      log('[A-5-2] 手臂帶動好卡【垂直向上平穩上抬】，卡片全程保持絕對水平！', 'log-cyan');
-      await setKukaArmPose(-Math.PI / 2, -0.12, 1.1, -0.98, 400);
+      // (2) ★【向上微微垂直抬起】：卡片夾牢後，向上微微垂直抬起約 0.6 單位 (脫出銷點，卡片全程水平)
+      log('[A-5-2] ★【向上微微垂直抬起】卡片垂直微拔向上微抬，卡片全程嚴格水平！', 'log-cyan');
+      await setKukaArmPose(-Math.PI / 2, 0.12, 0.72, -0.84, 350);
 
-      // (3) 水平移動到車上位置
-      log('[A-5-3] 手臂維持安全高度，【水平平移】至車身頂部 Platform A 正上方！', 'log-cyan');
-      await setKukaArmPose(-Math.PI / 2, -0.18, 0.95, -0.77, 450);
+      // (3) ★【水平移動到車身放置區上方】：維持微抬高度，平滑水平橫移至車載平台 Platform A 正上方
+      log('[A-5-3] ★【水平移動】維持安全高度，手臂平滑水平平移至車身放置區 (Platform A) 正上方！', 'log-cyan');
+      await setKukaArmPose(-Math.PI / 2, -0.15, 0.95, -0.80, 420);
 
-      // (4) 下放安座於車上
-      log('[A-5-4] 手爪垂直平降【下放安座】於車載平台，夾爪張開釋放！', 'log-green');
+      // (4) ★【接著再垂直下放】：垂直平降安座於車身載具圓盤，夾爪張開釋放！
+      log('[A-5-4] ★【垂直下放】手爪垂直直線平降，平穩安座於車頂銀白圓盤，夾爪張開釋放！', 'log-green');
       await setKukaArmPose(-Math.PI / 2, 0.08, 0.78, -0.86, 350);
       await setGripperClawState('OPEN', 200);
       cardOnGripper.visible = false;
@@ -2369,26 +2385,26 @@
       await lerpVector3(agvVehicle, new THREE.Vector3(5.8, 0, 0.0), 600);
       await lerpVector3(agvVehicle, new THREE.Vector3(5.8, 0, -3.5), 600);
 
-      // 10. ★【SWAP 動作 A：自機台滑台取退壞卡 (標準 4 階段)】：
+      // 10. ★【SWAP 動作 A：自機台滑台取退壞卡 (微抬 ➔ 水平平移 ➔ 垂直下放)】：
       // (1) 移到機台滑台壞卡正上方 ➔ 下探合緊
-      log('[A-10-1] 手臂先移至滑台壞卡正上方，第三節垂直下探，四爪合緊咬合壞卡！', 'log-orange');
+      log('[A-10-1] 肘部雙關節導引手臂至滑台正上方，手爪垂直下探，四爪合緊扣牢壞卡！', 'log-orange');
       await setGripperClawState('OPEN', 100);
-      await setKukaArmTwoStage(-1.92, 0.24, 0.85, 400, 450);
+      await setKukaArmTwoStage(-1.92, 0.24, 0.85, 380, 420);
       await setGripperClawState('CLAMP', 250);
       prober1.installedCard.visible = false;
       cardOnGripper.visible = true;
       cardOnGripper.children[0].material.color.setHex(0xe65100);
 
-      // (2) 上抬 (垂直提升)
-      log('[A-10-2] 手臂垂直向上拔起上抬，壞卡全程嚴格保持水平！', 'log-orange');
-      await setKukaArmPose(-1.92, -0.12, 1.1, -0.98, 400);
+      // (2) ★【向上微微垂直抬起】
+      log('[A-10-2] ★【向上微微垂直抬起】壞卡垂直拔起微抬，卡片全程保持絕對水平！', 'log-orange');
+      await setKukaArmPose(-1.92, 0.14, 0.75, -0.89, 350);
 
-      // (3) 水平移動到車上位置
-      log('[A-10-3] 手臂帶動壞卡【水平平移】至車頂 Platform B 正上方！', 'log-orange');
-      await setKukaArmPose(-Math.PI / 2, -0.18, 0.95, -0.77, 450);
+      // (3) ★【水平移動到車身放置區上方】
+      log('[A-10-3] ★【水平移動】手臂帶動壞卡水平平移至車頂 Platform B 正上方！', 'log-orange');
+      await setKukaArmPose(-Math.PI / 2, -0.15, 0.95, -0.80, 420);
 
-      // (4) 下放安座於 Platform B
-      log('[A-10-4] 垂直下放安座於車載壞卡台，夾爪張開釋放！', 'log-green');
+      // (4) ★【接著再垂直下放】
+      log('[A-10-4] ★【垂直下放】垂直直線平降，平穩安座於車載壞卡台，夾爪張開釋放！', 'log-green');
       await setKukaArmPose(-Math.PI / 2, 0.08, 0.78, -0.86, 350);
       await setGripperClawState('OPEN', 200);
       cardOnGripper.visible = false;
@@ -2400,9 +2416,9 @@
       log('[A-10-5] 車載雙平台切換：壞卡下沉，好卡升至頂面就位！', 'log-cyan');
       await switchKukaDecks('A');
 
-      // ★【SWAP 動作 B：自車上取好卡裝上機台滑台 (標準 4 階段)】：
+      // ★【SWAP 動作 B：自車上取好卡裝上機台滑台 (微抬 ➔ 水平平移 ➔ 垂直下放)】：
       // (1) 移至車上 Platform A 好卡正上方 ➔ 下探合緊
-      log('[A-11-1] 手爪移至車頂 Platform A 正上方下探，向內扣緊好卡！', 'log-green');
+      log('[A-11-1] 手爪對準車頂 Platform A 正上方垂直下探，向內扣緊好卡！', 'log-green');
       await setGripperClawState('OPEN', 100);
       await setKukaArmPose(-Math.PI / 2, 0.08, 0.78, -0.86, 350);
       await setGripperClawState('CLAMP', 250);
@@ -2411,16 +2427,16 @@
       cardOnGripper.visible = true;
       cardOnGripper.children[0].material.color.setHex(0x16a34a);
 
-      // (2) 上抬
-      log('[A-11-2] 好卡垂直向上平穩上抬至安全高度！', 'log-green');
-      await setKukaArmPose(0, -0.15, 1.1, -0.95, 400);
+      // (2) ★【向上微微垂直抬起】
+      log('[A-11-2] ★【向上微微垂直抬起】好卡垂直微拔向上微抬至安全高度！', 'log-green');
+      await setKukaArmPose(-Math.PI / 2, -0.15, 0.95, -0.80, 350);
 
-      // (3) 水平移動到機台滑台位置
-      log('[A-11-3] 手臂帶好卡【水平平移】至機台滑台正上方！', 'log-green');
-      await setKukaArmPose(-1.92, -0.12, 1.1, -0.98, 450);
+      // (3) ★【水平移動到機台滑台上方】
+      log('[A-11-3] ★【水平移動】手臂帶好卡平滑水平平移至機台滑台正上方！', 'log-green');
+      await setKukaArmPose(-1.92, 0.14, 0.75, -0.89, 420);
 
-      // (4) 下放裝機
-      log('[A-11-4] 手爪垂直平降【下放安座】於機台定位銷，夾爪張開完成裝機！', 'log-green');
+      // (4) ★【接著再垂直下放】
+      log('[A-11-4] ★【垂直下放】垂直直線平降安座於機台滑台定位銷，夾爪張開釋放！', 'log-green');
       await setKukaArmPose(-1.92, 0.24, 0.85, -1.09, 350);
       await setGripperClawState('OPEN', 200);
       cardOnGripper.visible = false;
@@ -2447,9 +2463,9 @@
       log('[A-13] MR 車載著壞卡返航 PC Stocker 出入口工作位 (X = -14.2)...', 'log-orange');
       await lerpVector3(agvVehicle, new THREE.Vector3(-15.8, 0, 13.6), 1100);
 
-      // 13. ★【退壞卡至 Port B (標準 4 階段)】：
+      // 13. ★【退壞卡至 Port B (微抬 ➔ 水平平移 ➔ 垂直下放)】：
       // (1) 移至車上 Platform B 壞卡正上方 ➔ 下探合緊
-      log('[A-14-1] 手爪移至車頂 Platform B 壞卡正上方下探，向內扣緊壞卡！', 'log-cyan');
+      log('[A-14-1] 手爪對準車頂 Platform B 壞卡正上方下探，向內扣緊壞卡！', 'log-cyan');
       await setGripperClawState('OPEN', 100);
       await setKukaArmPose(-Math.PI / 2, 0.08, 0.78, -0.86, 350);
       await setGripperClawState('CLAMP', 250);
@@ -2458,15 +2474,16 @@
       cardOnGripper.visible = true;
       cardOnGripper.children[0].material.color.setHex(0xe65100);
 
-      // (2) 上抬
-      await setKukaArmPose(0, -0.15, 1.1, -0.95, 400);
+      // (2) ★【向上微微垂直抬起】
+      log('[A-14-2] ★【向上微微垂直抬起】壞卡垂直微抬至安全高度！', 'log-cyan');
+      await setKukaArmPose(-Math.PI / 2, -0.15, 0.95, -0.80, 350);
 
-      // (3) 水平移動到 Port B 正上方
-      log('[A-14-2] 手臂帶動壞卡【水平平移】至 Port B 正上方！', 'log-cyan');
-      await setKukaArmPose(-Math.PI / 2, -0.12, 1.1, -0.98, 450);
+      // (3) ★【水平移動到 Port B 正上方】
+      log('[A-14-3] ★【水平移動】手臂帶動壞卡水平平移至 Port B 出入口正上方！', 'log-cyan');
+      await setKukaArmPose(-Math.PI / 2, 0.12, 0.72, -0.84, 420);
 
-      // (4) 下放安座於 Port B
-      log('[A-14-3] 垂直平降【下放安座】於 Port B 出入口，夾爪張開釋放！', 'log-cyan');
+      // (4) ★【接著再垂直下放】
+      log('[A-14-4] ★【垂直下放】垂直直線平降安座於 Port B 出入口，夾爪張開釋放！', 'log-cyan');
       await setKukaArmPose(-Math.PI / 2, 0.22, 0.82, -1.04, 350);
       await setGripperClawState('OPEN', 200);
       bareCardOnPortB.visible = true;
@@ -2584,25 +2601,25 @@
       log('[B-5] MR 車精準停靠至 Port B 工作位 (X = -14.2)，手臂就近取卡！', 'log-orange');
       await lerpVector3(agvVehicle, new THREE.Vector3(-15.8, 0, 13.6), 700);
 
-      // ★ 取好卡上車 (標準 4 階段：移至正上方 ➔ 下探合緊 ➔ 上抬 ➔ 水平移動 ➔ 下放)
-      log('[B-5-1] 手臂移至 Port B 好卡正上方，第三節引導下探，四爪合緊扣牢！', 'log-orange');
+      // ★ 取好卡上車 (微抬 ➔ 水平平移 ➔ 垂直下放)
+      log('[B-5-1] 肘部雙關節導引手臂至 Port B 好卡正上方下探，四爪合緊扣牢！', 'log-orange');
       await setGripperClawState('OPEN', 100);
-      await setKukaArmTwoStage(-Math.PI / 2, 0.22, 0.82, 400, 450);
+      await setKukaArmTwoStage(-Math.PI / 2, 0.22, 0.82, 380, 420);
       await setGripperClawState('CLAMP', 250);
       bareCardOnPortB.visible = false;
       cardOnGripper.visible = true;
       cardOnGripper.children[0].material.color.setHex(0x16a34a);
 
-      // 上抬
-      log('[B-5-2] 手臂垂直向上拔起上抬，好卡全程嚴格水平！', 'log-orange');
-      await setKukaArmPose(-Math.PI / 2, -0.12, 1.1, -0.98, 400);
+      // ★ 向上微微垂直抬起
+      log('[B-5-2] ★【向上微微垂直抬起】好卡垂直微拔向上微抬，卡片全程嚴格水平！', 'log-orange');
+      await setKukaArmPose(-Math.PI / 2, 0.12, 0.72, -0.84, 350);
 
-      // 水平平移至車上 Platform A
-      log('[B-5-3] 手臂帶動好卡【水平平移】至車頂 Platform A 正上方！', 'log-orange');
-      await setKukaArmPose(-Math.PI / 2, -0.18, 0.95, -0.77, 450);
+      // ★ 水平平移至車上 Platform A
+      log('[B-5-3] ★【水平移動】維持安全高度，手臂平滑水平平移至車身頂部 Platform A 正上方！', 'log-orange');
+      await setKukaArmPose(-Math.PI / 2, -0.15, 0.95, -0.80, 420);
 
-      // 下放安座
-      log('[B-5-4] 垂直下放安座於車載平台，夾爪張開釋放！', 'log-green');
+      // ★ 接著再垂直下放
+      log('[B-5-4] ★【垂直下放】手爪垂直直線平降，平穩安座於車載平台，夾爪張開釋放！', 'log-green');
       await setKukaArmPose(-Math.PI / 2, 0.08, 0.78, -0.86, 350);
       await setGripperClawState('OPEN', 200);
       cardOnGripper.visible = false;
@@ -2628,7 +2645,7 @@
       await lerpVector3(agvVehicle, new THREE.Vector3(27.8, 0, 0.0), 600);
       await lerpVector3(agvVehicle, new THREE.Vector3(27.8, 0, -3.5), 600);
 
-      // ★【自車上取好卡裝上機台滑台 (標準 4 階段：移至正上方 ➔ 下探合緊 ➔ 上抬 ➔ 水平移動 ➔ 下放)】：
+      // ★【自車上取好卡裝上機台滑台 (微抬 ➔ 水平平移 ➔ 垂直下放)】：
       // (1) 移至車上 Platform A 好卡正上方 ➔ 下探合緊
       log('[B-9-1] 手爪移至車頂 Platform A 正上方下探，向內扣緊好卡！', 'log-green');
       await setGripperClawState('OPEN', 100);
@@ -2639,16 +2656,16 @@
       cardOnGripper.visible = true;
       cardOnGripper.children[0].material.color.setHex(0x16a34a);
 
-      // (2) 上抬
-      log('[B-9-2] 好卡垂直向上平穩上抬至安全高度！', 'log-green');
-      await setKukaArmPose(0, -0.15, 1.1, -0.95, 400);
+      // (2) ★【向上微微垂直抬起】
+      log('[B-9-2] ★【向上微微垂直抬起】好卡垂直微拔向上微抬至安全高度！', 'log-green');
+      await setKukaArmPose(-Math.PI / 2, -0.15, 0.95, -0.80, 350);
 
-      // (3) 水平移動到機台滑台正上方
-      log('[B-9-3] 手臂帶好卡【水平平移】至機台滑台正上方！', 'log-green');
-      await setKukaArmPose(-1.92, -0.12, 1.1, -0.98, 450);
+      // (3) ★【水平移動到機台滑台正上方】
+      log('[B-9-3] ★【水平移動】手臂帶好卡平滑水平平移至機台滑台正上方！', 'log-green');
+      await setKukaArmPose(-1.92, 0.14, 0.75, -0.89, 420);
 
-      // (4) 下放裝機
-      log('[B-9-4] 手爪垂直平降【下放安座】於機台定位銷，夾爪張開完成裝機！', 'log-green');
+      // (4) ★【接著再垂直下放】
+      log('[B-9-4] ★【垂直下放】手爪垂直直線平降安座於機台滑台定位銷，夾爪張開完成裝機！', 'log-green');
       await setKukaArmPose(-1.92, 0.24, 0.85, -1.09, 350);
       await setGripperClawState('OPEN', 200);
       cardOnGripper.visible = false;
