@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>晶圓測試廠 3D 全自動化物流與換卡系統 (完整工藝版)</title>
+  <title>晶圓測試廠 3D 全自動化物流與換卡系統 (Prober 1 Swap & Prober 2 新卡安裝完整工藝版)</title>
   <style>
     :root {
       --bg: #070c16;
@@ -136,7 +136,7 @@
     #panel-controls {
       top: 14px;
       right: 14px;
-      width: 350px;
+      width: 360px;
       max-height: calc(100% - 28px);
       display: flex;
       flex-direction: column;
@@ -193,16 +193,22 @@
       border-radius: 8px;
       padding: 8px;
       font-size: 11px;
+      transition: all 0.3s;
     }
 
-    .prober-card.ready {
+    .prober-card.has-good {
       border-color: var(--green);
-      background: rgba(0, 230, 118, 0.08);
+      background: rgba(0, 230, 118, 0.1);
     }
 
-    .prober-card.testing {
-      border-color: var(--accent);
-      background: rgba(0, 210, 255, 0.12);
+    .prober-card.has-bad {
+      border-color: var(--red);
+      background: rgba(255, 51, 75, 0.1);
+    }
+
+    .prober-card.is-empty {
+      border-color: #64748b;
+      background: rgba(100, 116, 139, 0.08);
     }
 
     .prober-card h4 {
@@ -263,32 +269,6 @@
       cursor: not-allowed;
     }
 
-    .target-picker {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-
-    .picker-btn {
-      flex: 1;
-      padding: 6px;
-      border-radius: 6px;
-      border: 1px solid var(--panel-border);
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--text-muted);
-      font-size: 11px;
-      font-weight: bold;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.2s;
-    }
-
-    .picker-btn.active {
-      border-color: var(--accent);
-      background: rgba(0, 210, 255, 0.15);
-      color: var(--accent);
-    }
-
     .slot-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -317,7 +297,7 @@
       padding: 8px;
       font-family: Consolas, Monaco, monospace;
       font-size: 10px;
-      height: 115px;
+      height: 110px;
       overflow-y: auto;
       color: #94a3b8;
       line-height: 1.5;
@@ -428,7 +408,7 @@
       <div class="brand-icon">3D</div>
       <div class="brand-info">
         <h1>晶圓測試廠 3D 全自動化物流與換卡系統</h1>
-        <p>85%透明PC倉儲透視 ｜ 落地式鉸鏈房間門 ｜ 舊卡回收穿箱 ➔ 車變空 ➔ 取好卡 ➔ 裝機轉綠燈 ➔ OHT送FOUP</p>
+        <p>工況：Prober #1 壞卡 Swap 換好卡 ｜ Prober #2 空卡直接送好卡 ｜ 85%透明PC倉儲 ｜ 落地式房間門</p>
       </div>
     </div>
     <div class="header-status">
@@ -472,76 +452,76 @@
 
     <div class="hud-panel" id="panel-camera">
       <button class="btn-cam" onclick="setCameraView('iso')">等角全景 (Isometric)</button>
-      <button class="btn-cam" onclick="setCameraView('stocker')">看 PC 透明倉儲 (10格)</button>
-      <button class="btn-cam" onclick="setCameraView('probers')">看 Prober 落地房門</button>
+      <button class="btn-cam" onclick="setCameraView('stocker')">看 PC 85%透明倉儲</button>
+      <button class="btn-cam" onclick="setCameraView('prober1')">看 Prober 1 (有壞卡)</button>
+      <button class="btn-cam" onclick="setCameraView('prober2')">看 Prober 2 (空卡)</button>
       <button class="btn-cam" onclick="setCameraView('oht')">追蹤 OHT 天車</button>
       <button class="btn-cam" onclick="setCameraView('agv')">追蹤 換卡 AGV</button>
     </div>
 
     <div class="footer-hints">
-      <div>🔍 <span>85%透明PC倉儲</span> 透視內部10個儲位與卡箱進出滑移</div>
-      <div>🚪 <span>真・落地房間門</span> 門框落地鉸鏈旋轉90度開門</div>
-      <div>🤖 <span>安全避讓</span> AGV 停在門外安全區，等門開妥載台伸出才上前</div>
+      <div>🔍 <span>85%透明外牆</span> 透視 10 儲位動態</div>
+      <div>🚪 <span>真・落地房間門</span> 門框落地外旋90度開門</div>
+      <div>⚙️ <span>Prober 1 Swap</span> 壞卡卸入 Slot 2 ➔ Slot 1 好卡裝上</div>
+      <div>✨ <span>Prober 2 裝卡</span> 空機直接裝好卡</div>
     </div>
 
     <div class="hud-panel" id="panel-controls">
       <div>
         <div class="section-title">
-          <span>Prober 機台實時狀態 (Interlock)</span>
+          <span>Prober 機台實時狀態 (3 種狀態)</span>
           <span style="font-size:9px; color:#38bdf8;">互鎖監控</span>
         </div>
         <div class="prober-status-grid">
-          <div class="prober-card" id="card-p1">
+          <div class="prober-card has-bad" id="card-p1">
             <h4>
               <span>Prober #01</span>
               <span class="prober-indicator" id="ind-p1" style="background:#ff334b;"></span>
             </h4>
-            <div style="color:var(--text-muted)">卡槽：<strong id="p1-card-status" style="color:#ff9100;">舊卡 (待回收)</strong></div>
-            <div style="color:var(--text-muted)">晶圓：<strong id="p1-foup-status">不可進料 (等待換卡)</strong></div>
+            <div style="color:var(--text-muted)">卡槽狀態：<strong id="p1-card-status" style="color:#ff334b;">【有壞卡】(待Swap)</strong></div>
+            <div style="color:var(--text-muted)">晶圓供料：<strong id="p1-foup-status" style="color:#94a3b8;">不可進料 (等待換卡)</strong></div>
           </div>
-          <div class="prober-card" id="card-p2">
+          <div class="prober-card is-empty" id="card-p2">
             <h4>
               <span>Prober #02</span>
-              <span class="prober-indicator" id="ind-p2" style="background:#ff334b;"></span>
+              <span class="prober-indicator" id="ind-p2" style="background:#64748b;"></span>
             </h4>
-            <div style="color:var(--text-muted)">卡槽：<strong id="p2-card-status" style="color:#ff9100;">舊卡 (待回收)</strong></div>
-            <div style="color:var(--text-muted)">晶圓：<strong id="p2-foup-status">不可進料 (等待換卡)</strong></div>
+            <div style="color:var(--text-muted)">卡槽狀態：<strong id="p2-card-status" style="color:#cbd5e1;">【空的無卡】(待裝卡)</strong></div>
+            <div style="color:var(--text-muted)">晶圓供料：<strong id="p2-foup-status" style="color:#94a3b8;">不可進料 (等待新卡)</strong></div>
           </div>
         </div>
         <div style="font-size:10px; color:#94a3b8; line-height:1.4;">
-          💡 <strong>閉環 SOP：</strong>AGV 先取舊卡 ➔ 送回脫穿箱機 ➔ 叫空箱穿箱回存 PC Stocker (更新為壞卡) ➔ 車變空 ➔ 從卡庫取好卡 ➔ 裝上指定 Prober ➔ 關門亮綠燈 ➔ OHT 送 FOUP！
+          💡 <strong>三種標準機台狀態：</strong>【有好卡】(綠/運轉)、【有壞卡】(紅/待換)、【空的無卡】(灰/待裝)。裝好卡關門後才亮綠燈，OHT 才會吊送 FOUP 進料！
         </div>
       </div>
 
       <div>
         <div class="section-title">
-          <span>全自動正向 SOP 循環</span>
+          <span>一鍵全自動巡迴 (Prober 1 &amp; 2)</span>
           <span style="font-size:9px; background:rgba(0,210,255,0.15); color:var(--accent); padding:2px 4px; border-radius:3px;">AUTO</span>
         </div>
         <button class="btn btn-primary" id="btn-auto-all">
-          ▶ 啟動完整換卡閉環與送晶圓巡迴
+          ▶ 啟動完整巡迴 (P1 Swap換卡 ➔ P2 送好卡 ➔ OHT送晶圓)
         </button>
         <button class="btn btn-outline" id="btn-reset-all">
-          ↺ 重置所有 3D 模型與狀態
+          ↺ 重置所有 3D 模型與初始工況
         </button>
       </div>
 
       <div>
         <div class="section-title">
-          <span>指定機台單步動作 (Manual Steps)</span>
-          <span style="font-size:9px; color:var(--text-muted);">STEP</span>
+          <span>單部階段演練 (Step by Step)</span>
+          <span style="font-size:9px; color:var(--text-muted);">PHASE</span>
         </div>
-        <div class="target-picker">
-          <div class="picker-btn active" id="pick-p1" onclick="setTargetProber(1)">派工至 Prober #01</div>
-          <div class="picker-btn" id="pick-p2" onclick="setTargetProber(2)">派工至 Prober #02</div>
-        </div>
-
-        <button class="btn btn-outline" id="btn-step-1">1. AGV 空車至機台 ➔ 避讓 ➔ 落地門開伸載台 ➔ 取回舊卡</button>
-        <button class="btn btn-outline" id="btn-step-2">2. AGV 載舊卡回脫穿箱機 ➔ 叫空箱穿箱 ➔ 回存卡庫更新為壞卡 (車變空)</button>
-        <button class="btn btn-outline" id="btn-step-3">3. PC 卡庫出好卡箱 ➔ 脫箱移至出口 ➔ 空箱回存</button>
-        <button class="btn btn-outline" id="btn-step-4">4. 空 AGV 車載夾爪夾取新卡上車 (Slot 1)</button>
-        <button class="btn btn-outline" id="btn-step-5">5. AGV 載新卡至機台 ➔ 落地門開伸載台 ➔ 裝新卡關門 ➔ 轉綠燈</button>
-        <button class="btn btn-outline" id="btn-step-6">6. 機台亮綠燈 ➔ OHT 環狀天車吊送 FOUP 進料開跑測試</button>
+        <button class="btn btn-outline" id="btn-p1-flow">
+          A. Prober #01 流程：取好卡 ➔ 避讓開門 ➔ Swap換卡 ➔ 壞卡回庫穿箱
+        </button>
+        <button class="btn btn-outline" id="btn-p2-flow">
+          B. Prober #02 流程：取好卡 ➔ 避讓開門 ➔ 伸空載台裝新卡 ➔ 關門轉綠
+        </button>
+        <button class="btn btn-outline" id="btn-oht-flow">
+          C. OHT 流程：天車沿環狀閉環軌道吊裝 FOUP 至綠燈機台開測
+        </button>
       </div>
 
       <div>
@@ -551,11 +531,11 @@
         </div>
         <div class="slot-grid">
           <div class="slot-item new" id="slot-1-ui">
-            <h5>SLOT 1 (新卡載位)</h5>
+            <h5>SLOT 1 (好卡/新卡槽)</h5>
             <p id="slot-1-txt" style="color:var(--text-muted);">(空 EMPTY)</p>
           </div>
           <div class="slot-item old" id="slot-2-ui">
-            <h5>SLOT 2 (舊卡接收位)</h5>
+            <h5>SLOT 2 (壞卡/舊卡槽)</h5>
             <p id="slot-2-txt" style="color:var(--text-muted);">(空 EMPTY)</p>
           </div>
         </div>
@@ -568,8 +548,8 @@
         </div>
         <div class="log-terminal" id="log-box">
           <div class="log-line log-cyan">[INIT] 3D 無塵室產線連線完成 (SECS E84/E87 Ready)</div>
-          <div class="log-line">[PC STOCKER] 85% 高透光外牆與 10 儲位即時聯鎖就緒</div>
-          <div class="log-line">[PROBER] 落地式實體房門 (Floor Hinged Door) 與獨立正面 Load Port 就緒</div>
+          <div class="log-line">[INITIAL STATUS] Prober #01: 【有壞卡】(待Swap)</div>
+          <div class="log-line">[INITIAL STATUS] Prober #02: 【空的無卡】(待裝新卡)</div>
         </div>
       </div>
     </div>
@@ -635,7 +615,6 @@
     grid.position.y = 0.01;
     scene.add(grid);
 
-    const agvTrackGeo = new THREE.PlaneGeometry(1.2, 42);
     const agvTrackMat = new THREE.MeshBasicMaterial({ color: 0x00d2ff, transparent: true, opacity: 0.35 });
     const agvTrack1 = new THREE.Mesh(new THREE.PlaneGeometry(42, 1.2), agvTrackMat);
     agvTrack1.rotation.x = -Math.PI / 2;
@@ -685,7 +664,6 @@
       });
     });
 
-    // OHT 天車
     const ohtVehicle = new THREE.Group();
     ohtVehicle.position.set(-26, ohtRailHeight, -14);
     ohtVehicle.userData = { name: "OHT 空中天車 (Overhead Hoist Transport)" };
@@ -770,7 +748,7 @@
     pcStockerGroup.userData = { name: "PC 探針卡智能立體貨架 (85%透明外牆 10格)" };
     scene.add(pcStockerGroup);
 
-    // 鋁合金骨架
+    // 鋁合金金屬骨架
     const pcMetalFrame = new THREE.Mesh(
       new THREE.BoxGeometry(14.2, 16.2, 8.2),
       new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.9, roughness: 0.2, wireframe: true })
@@ -778,13 +756,13 @@
     pcMetalFrame.position.set(0, 8, 0);
     pcStockerGroup.add(pcMetalFrame);
 
-    // 85% 高透光外牆 (透明度 85% / Opacity 0.15)
+    // 85% 高透明玻璃外牆 (opacity: 0.15)
     const pcGlassWall = new THREE.Mesh(
       new THREE.BoxGeometry(14, 16, 8),
       new THREE.MeshStandardMaterial({
         color: 0x38bdf8,
         transparent: true,
-        opacity: 0.15, // 85% 透明！
+        opacity: 0.15,
         roughness: 0.1,
         metalness: 0.1
       })
@@ -792,12 +770,10 @@
     pcGlassWall.position.set(0, 8, 0);
     pcStockerGroup.add(pcGlassWall);
 
-    // 倉儲內部頂部照明燈
     const stockerInnerLight = new THREE.PointLight(0x00d2ff, 1.8, 25);
     stockerInnerLight.position.set(0, 14, 0);
     pcStockerGroup.add(stockerInnerLight);
 
-    // 卡箱生成函式
     function createBoxMesh(boxLabel, stateType) {
       const g = new THREE.Group();
       let boxColor = 0x334155;
@@ -823,7 +799,6 @@
       return g;
     }
 
-    // 10 儲位初始資料
     const slotData = [
       { id: 'SLOT-01', col: -1, tier: 0, state: 'GOOD_CARD', boxId: 'BOX-A01', cardId: 'PC-8801-V4', health: '98.5% (良品好卡)' },
       { id: 'SLOT-02', col: 1,  tier: 0, state: 'EMPTY_BOX', boxId: 'BOX-B02', cardId: '無 (空箱)', health: '供退卡穿箱用' },
@@ -844,7 +819,6 @@
       const posY = 2.4 + s.tier * 2.8;
       const posZ = 1.6;
 
-      // 貨架導軌托盤
       const tray = new THREE.Mesh(
         new THREE.BoxGeometry(4.2, 0.25, 4.0),
         new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9 })
@@ -852,7 +826,6 @@
       tray.position.set(posX, posY - 0.7, posZ);
       pcStockerGroup.add(tray);
 
-      // 狀態指示燈
       let ledColor = 0x475569;
       if (s.state === 'EMPTY_BOX') ledColor = 0x38bdf8;
       else if (s.state === 'GOOD_CARD') ledColor = 0x00e676;
@@ -916,13 +889,11 @@
     btLid.position.set(0, 5.2, 0);
     boxToolGroup.add(btLid);
 
-    // 傳送中的活動卡箱 (穿透透明外牆滑動)
     const activeBoxInDecapper = createBoxMesh("ACTIVE-BOX", "EMPTY_BOX");
     activeBoxInDecapper.position.set(-15, 3.6, 12);
     activeBoxInDecapper.visible = false;
     scene.add(activeBoxInDecapper);
 
-    // 裸探針卡模型
     function createBareCardMesh(colorHex, label) {
       const g = new THREE.Group();
       const pcb = new THREE.Mesh(
@@ -956,15 +927,12 @@
     scene.add(bareCardNew);
 
     // =========================================================================
-    // 6. 重新設計的晶圓針測機 (PROBER #01 & PROBER #02)
-    // 關鍵亮點：
-    // 1) 左側 (X: -2.5)：專屬 FOUP Load Port，天車垂直路徑完全淨空！
-    // 2) 右側 (X: +2.6)：獨立探針卡換卡艙 (PCC Chamber)！
-    // 3) 真・落地式房間門 (Full-Height Floor-Standing Hinged Door)：
-    //    門框與門扇直接延伸至地面 (Y: 0 ~ 9.0)，如同真實無塵室房間門向外旋轉 90 度敞開！
-    // 4) 雙導軌電動伸出載台：門開妥後，載台平移伸出門外供換卡！
+    // 6. 晶圓針測機 (PROBER #01 & PROBER #02)
+    // 初始狀態：
+    // - Prober #01: 【有壞卡】(紅/待Swap) -> 載台上裝有壞卡 OLD-01
+    // - Prober #02: 【空的無卡】(灰/待裝好卡) -> 載台上無卡！
     // =========================================================================
-    function createProberTool(proberId, posX, posZ) {
+    function createProberTool(proberId, posX, posZ, initialStatus) {
       const g = new THREE.Group();
       g.position.set(posX, 0, posZ);
       g.userData = { name: `晶圓針測機 (${proberId})`, id: proberId };
@@ -977,7 +945,7 @@
       body.castShadow = true;
       g.add(body);
 
-      // 左側晶圓測試區 (正面 Z: 5.4 設置 FOUP Load Port)
+      // 左側晶圓區 (Load Port 在 Z: 5.4, X: -2.5)
       const win = new THREE.Mesh(
         new THREE.BoxGeometry(4.2, 3.2, 0.2),
         new THREE.MeshStandardMaterial({ color: 0x00e676, transparent: true, opacity: 0.25 })
@@ -1007,7 +975,7 @@
       loadPort.position.set(-2.5, 1.8, 5.4);
       g.add(loadPort);
 
-      // 右側獨立換卡模組 (PCC Chamber)
+      // 右側換卡區 (PCC Chamber)
       const pccPocket = new THREE.Mesh(
         new THREE.BoxGeometry(4.6, 7.2, 5.2),
         new THREE.MeshStandardMaterial({ color: 0x050914, metalness: 0.8, roughness: 0.8 })
@@ -1019,7 +987,7 @@
       pccLight.position.set(2.6, 7.8, 2.0);
       g.add(pccLight);
 
-      // 真・落地門框 (Floor Door Frame) 延伸至地面 (Y: 0 ~ 9.0)
+      // 落地式房間門框與鉸鏈門扇
       const floorDoorFrame = new THREE.Mesh(
         new THREE.BoxGeometry(4.8, 8.8, 0.25),
         new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8 })
@@ -1027,13 +995,10 @@
       floorDoorFrame.position.set(2.6, 4.4, 5.15);
       g.add(floorDoorFrame);
 
-      // 鉸鏈旋轉軸 (Hinged Pivot) 位於右側邊緣地面 (X: 4.8, Y: 0, Z: 5.28)
       const doorHingePivot = new THREE.Group();
       doorHingePivot.position.set(4.8, 0, 5.28);
       g.add(doorHingePivot);
 
-      // 落地式實體房間門扇 (Floor-Standing Room Door Panel)
-      // 高度 8.6，從地面 Y = 0.1 延伸至 Y = 8.7
       const floorDoorPanel = new THREE.Mesh(
         new THREE.BoxGeometry(4.4, 8.6, 0.18),
         new THREE.MeshStandardMaterial({
@@ -1043,10 +1008,9 @@
           emissive: 0x002233
         })
       );
-      floorDoorPanel.position.set(-2.2, 4.3, 0); // 旋轉軸在右側
+      floorDoorPanel.position.set(-2.2, 4.3, 0);
       doorHingePivot.add(floorDoorPanel);
 
-      // 門扇不銹鋼安全橫桿把手
       const doorHandle = new THREE.Mesh(
         new THREE.BoxGeometry(0.2, 1.6, 0.4),
         new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.95 })
@@ -1054,7 +1018,7 @@
       doorHandle.position.set(-4.0, 4.5, 0.25);
       doorHingePivot.add(doorHandle);
 
-      // 雙導軌電動伸出載台 (位於高度 Y: 5.8)
+      // 雙導軌伸出型載台
       const pccStageGroup = new THREE.Group();
       pccStageGroup.position.set(2.6, 5.8, 1.2);
       g.add(pccStageGroup);
@@ -1076,27 +1040,26 @@
       trayPlatform.position.set(0, 0.1, 0);
       pccStageGroup.add(trayPlatform);
 
-      [[-1.4, -1.4], [1.4, -1.4], [-1.4, 1.4], [1.4, 1.4]].forEach(([px, pz]) => {
-        const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.3, 8), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 1.0 }));
-        pin.position.set(px, 0.35, pz);
-        pccStageGroup.add(pin);
-      });
-
-      // 初始在機台內部的舊探針卡
-      const installedCard = createBareCardMesh(0xe65100, `OLD-${proberId}`);
+      // 載台上的卡片
+      const installedCard = createBareCardMesh(0xe65100, `CARD-${proberId}`);
       installedCard.position.set(0, 0.35, 0);
+      if (initialStatus === 'EMPTY') {
+        installedCard.visible = false; // Prober 2 初始無卡！
+      } else {
+        installedCard.visible = true; // Prober 1 初始有壞卡！
+      }
       pccStageGroup.add(installedCard);
 
-      // 三色塔燈
+      // 塔燈
       const tMast = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.5, 16), new THREE.MeshStandardMaterial({ color: 0x64748b }));
       tMast.position.set(4.6, 11.2, 4.2);
       g.add(tMast);
 
-      const lightRed = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16), new THREE.MeshBasicMaterial({ color: 0xff334b }));
+      const lightRed = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16), new THREE.MeshBasicMaterial({ color: initialStatus === 'HAS_BAD' ? 0xff334b : 0x330000 }));
       lightRed.position.set(4.6, 11.8, 4.2);
       g.add(lightRed);
 
-      const lightYellow = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16), new THREE.MeshBasicMaterial({ color: 0x332200 }));
+      const lightYellow = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16), new THREE.MeshBasicMaterial({ color: initialStatus === 'EMPTY' ? 0xffaa00 : 0x332200 }));
       lightYellow.position.set(4.6, 12.3, 4.2);
       g.add(lightYellow);
 
@@ -1115,12 +1078,12 @@
         lightRed: lightRed,
         lightYellow: lightYellow,
         lightGreen: lightGreen,
-        status: "NO_CARD"
+        status: initialStatus // 'HAS_BAD', 'EMPTY', 'HAS_GOOD', 'TESTING'
       };
     }
 
-    const prober1 = createProberTool("Prober_01", 8, -14);
-    const prober2 = createProberTool("Prober_02", 22, -14);
+    const prober1 = createProberTool("Prober_01", 8, -14, "HAS_BAD"); // 初始有壞卡
+    const prober2 = createProberTool("Prober_02", 22, -14, "EMPTY");   // 初始空的無卡
 
     // =========================================================================
     // 7. 雙工位換卡 AGV 台車 (含車載夾爪手臂)
@@ -1168,23 +1131,22 @@
     agvGripper.position.set(0, 0.6, 1.7);
     agvArmGroup.add(agvGripper);
 
-    const cardOnAgvSlot1 = createBareCardMesh(0x16a34a, "PC-NEW-88");
+    const cardOnAgvSlot1 = createBareCardMesh(0x16a34a, "PC-GOOD-88");
     cardOnAgvSlot1.position.set(-1.6, 2.1, 0);
     cardOnAgvSlot1.visible = false;
     agvVehicle.add(cardOnAgvSlot1);
 
-    const cardOnAgvSlot2 = createBareCardMesh(0xe65100, "OLD-CARD");
+    const cardOnAgvSlot2 = createBareCardMesh(0xe65100, "PC-BAD-OLD");
     cardOnAgvSlot2.position.set(1.6, 2.1, 0);
     cardOnAgvSlot2.visible = false;
     agvVehicle.add(cardOnAgvSlot2);
 
     // =========================================================================
-    // 8. 系統狀態管理
+    // 8. 狀態同步與動畫控制
     // =========================================================================
-    let targetProberId = 1;
     let isBusy = false;
-    let slot1Loaded = false;
-    let slot2Loaded = false;
+    let slot1Loaded = false; // Slot 1 好卡
+    let slot2Loaded = false; // Slot 2 壞卡
 
     const modeText = document.getElementById('mode-text');
     const logBox = document.getElementById('log-box');
@@ -1208,7 +1170,7 @@
       if (slot1Loaded) {
         cardOnAgvSlot1.visible = true;
         slot1UI.classList.add('active');
-        slot1Txt.textContent = 'PC-NEW-88';
+        slot1Txt.textContent = 'PC-GOOD-88';
         slot1Txt.style.color = 'var(--green)';
       } else {
         cardOnAgvSlot1.visible = false;
@@ -1220,7 +1182,7 @@
       if (slot2Loaded) {
         cardOnAgvSlot2.visible = true;
         slot2UI.classList.add('active');
-        slot2Txt.textContent = 'PC-OLD';
+        slot2Txt.textContent = 'PC-BAD-01';
         slot2Txt.style.color = 'var(--orange)';
       } else {
         cardOnAgvSlot2.visible = false;
@@ -1236,32 +1198,45 @@
         const foupTxt = document.getElementById(`p${pNum}-foup-status`);
         const cardDiv = document.getElementById(`card-p${pNum}`);
 
-        if (p.status === 'NO_CARD') {
+        if (p.status === 'HAS_BAD') {
           p.lightRed.material.color.setHex(0xff334b);
           p.lightYellow.material.color.setHex(0x332200);
           p.lightGreen.material.color.setHex(0x003300);
           ind.style.background = '#ff334b';
-          cardTxt.textContent = '舊卡待回收 / 無卡';
-          cardTxt.style.color = '#ff9100';
+          cardTxt.textContent = '【有壞卡】(待Swap)';
+          cardTxt.style.color = '#ff334b';
           foupTxt.textContent = '不可進料 (等待換卡)';
-          cardDiv.className = 'prober-card';
-        } else if (p.status === 'CARD_READY') {
+          foupTxt.style.color = '#94a3b8';
+          cardDiv.className = 'prober-card has-bad';
+        } else if (p.status === 'EMPTY') {
+          p.lightRed.material.color.setHex(0x330000);
+          p.lightYellow.material.color.setHex(0xffaa00);
+          p.lightGreen.material.color.setHex(0x003300);
+          ind.style.background = '#64748b';
+          cardTxt.textContent = '【空的無卡】(待裝卡)';
+          cardTxt.style.color = '#cbd5e1';
+          foupTxt.textContent = '不可進料 (等待新卡)';
+          foupTxt.style.color = '#94a3b8';
+          cardDiv.className = 'prober-card is-empty';
+        } else if (p.status === 'HAS_GOOD') {
           p.lightRed.material.color.setHex(0x330000);
           p.lightYellow.material.color.setHex(0x332200);
           p.lightGreen.material.color.setHex(0x00e676);
           ind.style.background = '#00e676';
-          cardTxt.textContent = '新卡 PC-NEW 就緒';
+          cardTxt.textContent = '【有好卡】(良品就緒)';
           cardTxt.style.color = '#00e676';
           foupTxt.textContent = 'AVAILABLE (可送 FOUP)';
-          cardDiv.className = 'prober-card ready';
+          foupTxt.style.color = '#00e676';
+          cardDiv.className = 'prober-card has-good';
         } else if (p.status === 'TESTING') {
           p.lightRed.material.color.setHex(0x330000);
           p.lightYellow.material.color.setHex(0x332200);
           p.lightGreen.material.color.setHex(0x00e676);
           ind.style.background = '#00d2ff';
-          cardTxt.textContent = '新卡 PC-NEW 就緒';
+          cardTxt.textContent = '【有好卡】(針測中)';
           cardTxt.style.color = '#00e676';
           foupTxt.textContent = 'FOUP 測試運轉中';
+          foupTxt.style.color = '#00d2ff';
           cardDiv.className = 'prober-card testing';
         }
       });
@@ -1300,335 +1275,308 @@
     }
 
     // =========================================================================
-    // 流程 1: AGV 空車至機台 ➔ 避讓 ➔ 落地門開伸載台 ➔ 取回舊卡
+    // 流程 A: Prober #01 執行 SWAP 換卡流程 (初始有壞卡 -> 換好卡)
     // =========================================================================
-    async function doStep1() {
+    async function runProber1SwapFlow() {
       if (isBusy) return;
       isBusy = true;
-      const target = targetProberId === 1 ? prober1 : prober2;
-      const dockX = targetProberId === 1 ? 10.6 : 24.6;
+      modeText.textContent = '執行中：Prober #01 SWAP 換卡流程 (先取好卡 ➔ 現場Swap ➔ 壞卡回庫)';
+      log('========================================================', 'log-cyan');
+      log('>>> 開始執行 Prober #01【SWAP 換卡作業】<<<', 'log-cyan');
+      log('========================================================', 'log-cyan');
 
-      modeText.textContent = `步驟 1: AGV 空車前往 Prober #${targetProberId} 取舊卡`;
-      log(`[SOP 1] AGV #07 (全空) 啟動，開往 Prober #${targetProberId} 換卡艙門安全避讓區...`, 'log-orange');
-
-      // 1. AGV 停在門外安全避讓區 (Z = 1.5，完全在落地門旋轉半徑外)
-      await lerpVector3(agvVehicle, new THREE.Vector3(dockX, 0, 12), 1100);
-      await lerpVector3(agvVehicle, new THREE.Vector3(dockX, 0, 1.5), 1200);
-
-      // 2. 落地式房間門向外旋轉 90 度敞開
-      log(`Prober #${targetProberId} 落地房間門向外平滑旋轉 90 度開啟！`, 'log-cyan');
-      await lerpRotationY(target.doorHingePivot, Math.PI / 2, 900);
-      await sleep(200);
-
-      // 3. 雙導軌載台平移伸出門外 (帶舊卡)
-      log(`Prober 載台【雙導軌電動伸出門外】(帶舊卡)...`, 'log-cyan');
-      await lerpVector3(target.pccStageGroup, new THREE.Vector3(2.6, 5.8, 6.8), 1100);
-      await sleep(200);
-
-      // 4. AGV 前進至取卡對位工位 (Z = -3.5)
-      log(`AGV 避讓完成，向前開入取卡工位對位...`, 'log-cyan');
-      await lerpVector3(agvVehicle, new THREE.Vector3(dockX, 0, -3.5), 800);
-
-      // 5. 車載夾爪夾取舊卡
-      log(`車載手臂向前伸展，空夾爪抓取舊卡...`, 'log-cyan');
-      await lerpVector3(agvArmGroup, new THREE.Vector3(0, 4.6, 0), 700);
-      await sleep(300);
-
-      // 6. 舊卡放入 Slot 2
-      log(`舊卡夾回，放入 AGV【Slot 2 舊卡槽】！`, 'log-orange');
-      target.installedCard.visible = false;
-      slot2Loaded = true;
-      syncUI();
-      await lerpVector3(agvArmGroup, new THREE.Vector3(1.6, 2.2, 0), 700);
-      await lerpVector3(agvArmGroup, new THREE.Vector3(0, 1.9, 0), 400);
-
-      // 7. 載台縮回
-      await lerpVector3(target.pccStageGroup, new THREE.Vector3(2.6, 5.8, 1.2), 900);
-
-      // 8. AGV 倒退退至安全避讓區
-      await lerpVector3(agvVehicle, new THREE.Vector3(dockX, 0, 1.5), 800);
-
-      // 9. 落地房間門旋轉閉合
-      log(`落地房間門旋轉關閉！正面 Load Port 保持完全獨立！`, 'log-cyan');
-      await lerpRotationY(target.doorHingePivot, 0, 800);
-
-      log(`舊卡已成功由 Prober #${targetProberId} 卸下至 AGV Slot 2！`, 'log-green');
-      modeText.textContent = '3D 產線待命 (IDLE)';
-      isBusy = false;
-    }
-
-    // =========================================================================
-    // 流程 2: AGV 載舊卡回脫穿箱機 ➔ 叫空箱穿箱 ➔ 回存卡庫更新為壞卡 (車變空)
-    // =========================================================================
-    async function doStep2() {
-      if (isBusy) return;
-      if (!slot2Loaded) {
-        log('錯誤: AGV 上無舊卡，請先執行步驟 1 取舊卡！', 'log-red');
-        return;
-      }
-      isBusy = true;
-      modeText.textContent = '步驟 2: AGV 載舊卡回脫穿箱機 ➔ 叫空箱穿箱 ➔ 更新為壞卡 (車變空)';
-      log('AGV #07: 載運【舊卡 PC-OLD】返航至脫穿箱機【端口 B 載台】...', 'log-orange');
-
-      // AGV 返航至脫穿箱機端口 B 前 (-8, 0, 12)
-      await lerpVector3(agvVehicle, new THREE.Vector3(-8, 0, 12), 1500);
-
-      // 車載手臂夾出舊卡放到端口 B 載台上 (車變空！)
-      log('AGV 車載手臂將舊卡取出放置於【端口 B 載台】，AGV 兩槽清空！', 'log-cyan');
-      await lerpVector3(agvArmGroup, new THREE.Vector3(1.6, 2.4, 0), 500);
-      slot2Loaded = false;
-      syncUI();
-      bareCardNew.visible = false;
-      await lerpVector3(agvArmGroup, new THREE.Vector3(-1.8, 3.2, 0), 700);
-      await lerpVector3(agvArmGroup, new THREE.Vector3(0, 1.9, 0), 400);
-
-      // 系統向 PC Stocker 呼叫空箱
-      log('★ 舊卡已就位！系統向 PC Stocker 呼叫空箱，穿透 85% 透明玻璃推出...', 'log-green');
+      // 1. 卡庫出好卡箱 ➔ 脫箱 ➔ 空箱回存
+      log('[A-1] PC Stocker: 自【Slot 01】推出好卡箱進入脫箱機開蓋...', 'log-cyan');
       activeBoxInDecapper.visible = true;
-      activeBoxInDecapper.children[0].material.color.setHex(0x1e3a8a); // 藍色空箱
-      activeBoxInDecapper.position.set(-22.6, 2.4, 13.6);
-      await lerpVector3(activeBoxInDecapper, new THREE.Vector3(-15, 3.6, 12), 900);
-
-      // 機台開蓋穿箱
-      await lerpVector3(btLid, new THREE.Vector3(0, 6.6, 0), 500);
-      log('脫穿箱機開蓋，將載台上的舊卡裝入箱內 (穿箱)...', 'log-cyan');
-      await sleep(300);
-
-      // 闔蓋鎖扣，變為壞卡箱 (橘紅色)
-      activeBoxInDecapper.children[0].material.color.setHex(0x7c2d12);
-      await lerpVector3(btLid, new THREE.Vector3(0, 5.2, 0), 500);
-
-      // 卡箱經由【端口 A】穿透透明外牆推回 PC Stocker 儲位 (Slot 05 壞卡位)
-      log('裝箱完成！卡箱穿透透明外牆送回【Slot 05 儲位】，狀態更新為【箱內有壞卡】！', 'log-green');
-      await lerpVector3(activeBoxInDecapper, new THREE.Vector3(-22.6, 2.4, 13.6), 1000);
-      activeBoxInDecapper.visible = false;
-
-      // 更新儲位 5 狀態為壞卡 (紅燈)
-      slotData[4].state = 'DEFECT_CARD';
-      slotMeshList[4].userData.ledMesh.material.color.setHex(0xff334b);
-
-      log('★ 舊卡穿箱回庫圓滿完成！AGV 目前兩槽【全空】，可準備領取新卡！', 'log-green');
-      modeText.textContent = '3D 產線待命 (IDLE)';
-      isBusy = false;
-    }
-
-    // =========================================================================
-    // 流程 3: PC 卡庫出新卡箱 ➔ 脫箱移至出口 ➔ 空箱回存
-    // =========================================================================
-    async function doStep3() {
-      if (isBusy) return;
-      isBusy = true;
-      modeText.textContent = '步驟 3: PC 卡庫出好卡箱 ➔ 脫箱移至出口 ➔ 空箱回存';
-      log('PC Stocker: 穿透透明外牆，自【Slot 01】推出裝有新卡之保護箱...', 'log-cyan');
-
-      activeBoxInDecapper.visible = true;
-      activeBoxInDecapper.children[0].material.color.setHex(0x14532d); // 綠色好卡箱
+      activeBoxInDecapper.children[0].material.color.setHex(0x14532d);
       activeBoxInDecapper.position.set(-22.6, 2.4, 13.6);
       await lerpVector3(activeBoxInDecapper, new THREE.Vector3(-15, 3.6, 12), 1000);
 
-      log('脫穿箱機台開蓋，內部吸附機構開箱...', 'log-cyan');
-      await lerpVector3(btLid, new THREE.Vector3(0, 6.6, 0), 600);
-      await sleep(300);
-
+      await lerpVector3(btLid, new THREE.Vector3(0, 6.6, 0), 500);
       bareCardNew.visible = true;
       bareCardNew.position.set(-15, 4.7, 12);
-      await lerpVector3(bareCardNew, new THREE.Vector3(-10.8, 4.7, 12), 800);
+      await lerpVector3(bareCardNew, new THREE.Vector3(-10.8, 4.7, 12), 700);
+      await lerpVector3(btLid, new THREE.Vector3(0, 5.2, 0), 400);
 
-      await lerpVector3(btLid, new THREE.Vector3(0, 5.2, 0), 500);
-
-      log('脫箱完成！開出的【空箱】由端口 A 送回 PC Stocker 儲位！', 'log-green');
-      await lerpVector3(activeBoxInDecapper, new THREE.Vector3(-22.6, 2.4, 13.6), 1000);
+      log('[A-1] 空箱回存至 PC Stocker，好卡在【端口 B 載台】等待夾取', 'log-green');
+      await lerpVector3(activeBoxInDecapper, new THREE.Vector3(-22.6, 2.4, 13.6), 900);
       activeBoxInDecapper.visible = false;
-
       slotData[0].state = 'EMPTY_SLOT';
       slotMeshList[0].userData.boxMesh.visible = false;
       slotMeshList[0].userData.ledMesh.material.color.setHex(0x475569);
 
-      modeText.textContent = '3D 產線待命 (IDLE)';
-      isBusy = false;
-    }
-
-    // =========================================================================
-    // 流程 4: 空 AGV 車載夾爪夾取新卡上車 (Slot 1)
-    // =========================================================================
-    async function doStep4() {
-      if (isBusy) return;
-      if (!bareCardNew.visible) {
-        log('錯誤: 出口載台上尚無新卡，請先執行步驟 3 脫箱！', 'log-red');
-        return;
-      }
-      isBusy = true;
-      modeText.textContent = '步驟 4: 空 AGV 車載夾爪夾取新卡上車 (Slot 1)';
-      log('AGV #07 (全空狀態): 車載手臂旋轉伸出，夾取出口載台之新卡...', 'log-cyan');
-
+      // 2. 空 AGV 夾取好卡放入 Slot 1
+      log('[A-2] AGV #07 車載手臂夾取好卡放入【Slot 1】！(Slot 2 維持為空，供回收壞卡)', 'log-cyan');
+      await lerpVector3(agvVehicle, new THREE.Vector3(-8, 0, 12), 700);
       await lerpVector3(agvArmGroup, new THREE.Vector3(-1.8, 2.4, 0), 600);
-      await sleep(300);
-
       bareCardNew.visible = false;
       slot1Loaded = true;
       syncUI();
-      await lerpVector3(agvArmGroup, new THREE.Vector3(0, 1.9, 0), 600);
+      await lerpVector3(agvArmGroup, new THREE.Vector3(0, 1.9, 0), 500);
 
-      log('新探針卡 PC-NEW-88 已裝入 AGV【Slot 1】！Slot 2 為空，準備送往機台！', 'log-green');
-      modeText.textContent = '3D 產線待命 (IDLE)';
-      isBusy = false;
-    }
+      // 3. AGV 載好卡出發至 Prober #01 安全避讓區
+      log('[A-3] AGV 載好卡出發，先停於 Prober #01 門外【安全避讓區】(Z = 1.5)...', 'log-orange');
+      await lerpVector3(agvVehicle, new THREE.Vector3(10.6, 0, 12), 1100);
+      await lerpVector3(agvVehicle, new THREE.Vector3(10.6, 0, 1.5), 1200);
 
-    // =========================================================================
-    // 流程 5: AGV 載新卡至機台 ➔ 落地門開伸載台 ➔ 裝新卡關門 ➔ 轉綠燈
-    // =========================================================================
-    async function doStep5() {
-      if (isBusy) return;
-      if (!slot1Loaded) {
-        log('錯誤: AGV Slot 1 尚未裝載新卡，請先執行步驟 4 夾取新卡！', 'log-red');
-        return;
-      }
-      isBusy = true;
-      const target = targetProberId === 1 ? prober1 : prober2;
-      const dockX = targetProberId === 1 ? 10.6 : 24.6;
+      // 4. Prober #01 落地房間門旋轉 90 度開啟
+      log('[A-4] Prober #01 落地房間門向外旋轉 90 度敞開！', 'log-cyan');
+      await lerpRotationY(prober1.doorHingePivot, Math.PI / 2, 900);
 
-      modeText.textContent = `步驟 5: AGV 載新卡至 Prober #${targetProberId} 安裝新卡`;
-      log(`AGV #07 載運新卡開往 Prober #${targetProberId} 換卡艙門安全避讓區...`, 'log-orange');
+      // 5. 雙導軌載台伸出門外 (帶壞卡)
+      log('[A-5] 雙導軌載台平移伸出門外 (載著機台內的壞卡)...', 'log-cyan');
+      await lerpVector3(prober1.pccStageGroup, new THREE.Vector3(2.6, 5.8, 6.8), 1000);
 
-      // 1. AGV 停在門外安全避讓區 (Z = 1.5)
-      await lerpVector3(agvVehicle, new THREE.Vector3(dockX, 0, 12), 1100);
-      await lerpVector3(agvVehicle, new THREE.Vector3(dockX, 0, 1.5), 1200);
+      // 6. AGV 前進至取卡工位 (Z = -3.5) 對位
+      log('[A-6] 門已開妥載台已伸出，AGV 安全前進至取卡工位對位...', 'log-cyan');
+      await lerpVector3(agvVehicle, new THREE.Vector3(10.6, 0, -3.5), 800);
 
-      // 2. 落地門向外旋轉 90 度敞開
-      log(`Prober 落地房間門旋轉 90 度平滑開啟！`, 'log-cyan');
-      await lerpRotationY(target.doorHingePivot, Math.PI / 2, 900);
-      await sleep(200);
+      // 7. 【SWAP 動作 A】：夾取壞卡放入 Slot 2
+      log('[A-7 SWAP 動作] 車載手臂伸出，將機台載台上的【壞卡】夾下放進車上【Slot 2】！', 'log-orange');
+      await lerpVector3(agvArmGroup, new THREE.Vector3(0, 4.6, 0), 600);
+      prober1.installedCard.visible = false;
+      slot2Loaded = true;
+      syncUI();
+      await lerpVector3(agvArmGroup, new THREE.Vector3(1.6, 2.2, 0), 700);
 
-      // 3. 雙導軌載台平移伸出門外
-      log(`Prober 載台【雙導軌伸出門外】等待裝載新卡...`, 'log-cyan');
-      await lerpVector3(target.pccStageGroup, new THREE.Vector3(2.6, 5.8, 6.8), 1100);
-
-      // 4. AGV 前進對位 (Z = -3.5)
-      await lerpVector3(agvVehicle, new THREE.Vector3(dockX, 0, -3.5), 800);
-
-      // 5. AGV 手臂將 Slot 1 新卡裝上伸出之載台
-      log(`AGV 車載手臂夾取【Slot 1】新卡，平穩放置於伸出載台上...`, 'log-green');
-      await lerpVector3(agvArmGroup, new THREE.Vector3(-1.6, 2.2, 0), 500);
+      // 8. 【SWAP 動作 B】：自 Slot 1 夾取好卡裝上載台
+      log('[A-8 SWAP 動作] 車載手臂立即自【Slot 1】夾起好卡，穩妥安裝於 Prober 載台上！', 'log-green');
+      await lerpVector3(agvArmGroup, new THREE.Vector3(-1.6, 2.2, 0), 600);
       slot1Loaded = false;
       syncUI();
-      target.installedCard.visible = true;
-      target.installedCard.children[0].material.color.setHex(0x16a34a); // 變新卡綠色
+      prober1.installedCard.visible = true;
+      prober1.installedCard.children[0].material.color.setHex(0x16a34a); // 變良品綠卡！
       await lerpVector3(agvArmGroup, new THREE.Vector3(0, 4.6, 0), 700);
       await lerpVector3(agvArmGroup, new THREE.Vector3(0, 1.9, 0), 400);
 
-      // 6. 載台平移縮回機台內部
-      log(`Prober 載台帶新卡縮回機台內部核心...`, 'log-cyan');
-      await lerpVector3(target.pccStageGroup, new THREE.Vector3(2.6, 5.8, 1.2), 900);
+      // 9. 載台帶著好卡縮回內部
+      log('[A-9] Prober #01 載台帶著新好卡縮回機身內部...', 'log-cyan');
+      await lerpVector3(prober1.pccStageGroup, new THREE.Vector3(2.6, 5.8, 1.2), 900);
 
-      // 7. AGV 倒退離開防護光幕回到安全區
-      log(`AGV 倒退駛離門扇旋轉範圍...`, 'log-orange');
-      await lerpVector3(agvVehicle, new THREE.Vector3(dockX, 0, 1.5), 800);
+      // 10. AGV 倒退退回安全避讓區
+      log('[A-10] AGV 倒退退回門外安全避讓區...', 'log-orange');
+      await lerpVector3(agvVehicle, new THREE.Vector3(10.6, 0, 1.5), 800);
 
-      // 8. 落地房間門旋轉閉合鎖固
-      log(`落地房間門旋轉閉合鎖固！正面 Load Port 全程完全未受干涉！`, 'log-cyan');
-      await lerpRotationY(target.doorHingePivot, 0, 800);
+      // 11. 落地房間門旋轉閉合
+      log('[A-11] 落地房間門閉合鎖固！正面 Load Port 保持完全獨立無干涉！', 'log-cyan');
+      await lerpRotationY(prober1.doorHingePivot, 0, 800);
 
-      // 互鎖解開：轉為綠燈 AVAILABLE！
-      target.status = 'CARD_READY';
+      // 互鎖解開：Prober #01 轉為【有好卡】綠燈！
+      prober1.status = 'HAS_GOOD';
       syncUI();
-      log(`★ 機台互鎖解開！Prober #${targetProberId} 轉為綠燈 AVAILABLE，允許 OHT 吊送 FOUP！`, 'log-green');
+      log('★【Prober #01 互鎖解除】狀態轉為【有好卡】綠燈 AVAILABLE，允許送晶圓！', 'log-green');
 
-      // AGV 返回 Home 待命
-      await lerpVector3(agvVehicle, new THREE.Vector3(-6, 0, 12), 1200);
+      // 12. AGV 載著 Slot 2 壞卡返航卡庫穿箱入庫
+      log('[A-12] AGV 載著【Slot 2 壞卡】返航脫穿箱機【端口 B】...', 'log-orange');
+      await lerpVector3(agvVehicle, new THREE.Vector3(-8, 0, 12), 1500);
+
+      log('[A-12] 壞卡放上載台，系統向卡庫呼叫空箱穿箱，回存 Slot 05 更新為【箱內有壞卡】！', 'log-cyan');
+      await lerpVector3(agvArmGroup, new THREE.Vector3(1.6, 2.4, 0), 500);
+      slot2Loaded = false;
+      syncUI();
+      await lerpVector3(agvArmGroup, new THREE.Vector3(0, 1.9, 0), 400);
+
+      activeBoxInDecapper.visible = true;
+      activeBoxInDecapper.children[0].material.color.setHex(0x1e3a8a);
+      activeBoxInDecapper.position.set(-22.6, 2.4, 13.6);
+      await lerpVector3(activeBoxInDecapper, new THREE.Vector3(-15, 3.6, 12), 800);
+      await lerpVector3(btLid, new THREE.Vector3(0, 6.6, 0), 400);
+      activeBoxInDecapper.children[0].material.color.setHex(0x7c2d12); // 變壞卡箱
+      await lerpVector3(btLid, new THREE.Vector3(0, 5.2, 0), 400);
+      await lerpVector3(activeBoxInDecapper, new THREE.Vector3(-22.6, 2.4, 13.6), 900);
+      activeBoxInDecapper.visible = false;
+
+      slotData[4].state = 'DEFECT_CARD';
+      slotMeshList[4].userData.ledMesh.material.color.setHex(0xff334b);
+
+      await lerpVector3(agvVehicle, new THREE.Vector3(-6, 0, 12), 600);
+      log('★ Prober #01 SWAP 換卡與壞卡穿箱回存圓滿完成！AGV 兩槽清空！', 'log-green');
 
       modeText.textContent = '3D 產線待命 (IDLE)';
       isBusy = false;
     }
 
     // =========================================================================
-    // 流程 6: 機台亮綠燈 ➔ OHT 環狀天車吊送 FOUP 進料開跑測試
+    // 流程 B: Prober #02 執行新卡裝載流程 (初始空的無卡 -> 裝上好卡)
     // =========================================================================
-    async function doStep6() {
+    async function runProber2InstallFlow() {
       if (isBusy) return;
-      const target = targetProberId === 1 ? prober1 : prober2;
-      const targetX = targetProberId === 1 ? 8 : 22;
-      const loadPortX = targetX - 2.5;
+      isBusy = true;
+      modeText.textContent = '執行中：Prober #02 新卡裝載流程 (空機直接送好卡上去)';
+      log('========================================================', 'log-cyan');
+      log('>>> 開始執行 Prober #02【空機送好卡上機作業】<<<', 'log-cyan');
+      log('========================================================', 'log-cyan');
 
-      if (target.status === 'NO_CARD') {
-        log(`互鎖攔截 (Interlock Blocked): Prober #${targetProberId} 尚未安裝新卡關門，拒絕派送 FOUP！`, 'log-red');
+      // 1. 卡庫出好卡箱 (自 Slot 04)
+      log('[B-1] PC Stocker: 自【Slot 04】推出第二個好卡箱進入脫箱機開蓋...', 'log-cyan');
+      activeBoxInDecapper.visible = true;
+      activeBoxInDecapper.children[0].material.color.setHex(0x14532d);
+      activeBoxInDecapper.position.set(-22.6, 5.2, 13.6);
+      await lerpVector3(activeBoxInDecapper, new THREE.Vector3(-15, 3.6, 12), 1000);
+
+      await lerpVector3(btLid, new THREE.Vector3(0, 6.6, 0), 500);
+      bareCardNew.visible = true;
+      bareCardNew.position.set(-15, 4.7, 12);
+      await lerpVector3(bareCardNew, new THREE.Vector3(-10.8, 4.7, 12), 700);
+      await lerpVector3(btLid, new THREE.Vector3(0, 5.2, 0), 400);
+
+      await lerpVector3(activeBoxInDecapper, new THREE.Vector3(-22.6, 5.2, 13.6), 900);
+      activeBoxInDecapper.visible = false;
+      slotData[3].state = 'EMPTY_SLOT';
+      slotMeshList[3].userData.boxMesh.visible = false;
+      slotMeshList[3].userData.ledMesh.material.color.setHex(0x475569);
+
+      // 2. 空 AGV 夾取好卡放入 Slot 1
+      log('[B-2] 空 AGV 車載手臂夾取新好卡裝入【Slot 1】！', 'log-cyan');
+      await lerpVector3(agvVehicle, new THREE.Vector3(-8, 0, 12), 700);
+      await lerpVector3(agvArmGroup, new THREE.Vector3(-1.8, 2.4, 0), 600);
+      bareCardNew.visible = false;
+      slot1Loaded = true;
+      syncUI();
+      await lerpVector3(agvArmGroup, new THREE.Vector3(0, 1.9, 0), 500);
+
+      // 3. AGV 載好卡出發至 Prober #02 安全避讓區 (Z = 1.5, X = 24.6)
+      log('[B-3] AGV 載好卡前往 Prober #02 門外【安全避讓區】...', 'log-orange');
+      await lerpVector3(agvVehicle, new THREE.Vector3(24.6, 0, 12), 1400);
+      await lerpVector3(agvVehicle, new THREE.Vector3(24.6, 0, 1.5), 1200);
+
+      // 4. Prober #02 落地房間門旋轉 90 度開啟
+      log('[B-4] Prober #02 落地房間門向外旋轉 90 度開啟！', 'log-cyan');
+      await lerpRotationY(prober2.doorHingePivot, Math.PI / 2, 900);
+
+      // 5. Prober #02 伸出空載台 (因機台初始無卡，無舊卡需退！)
+      log('[B-5] Prober #02 伸出【空載台】等待裝載新卡...', 'log-cyan');
+      await lerpVector3(prober2.pccStageGroup, new THREE.Vector3(2.6, 5.8, 6.8), 1000);
+
+      // 6. AGV 前進對位 (Z = -3.5)
+      await lerpVector3(agvVehicle, new THREE.Vector3(24.6, 0, -3.5), 800);
+
+      // 7. 直接將 Slot 1 好卡裝上空載台
+      log('[B-7 裝卡動作] AGV 車載手臂將【Slot 1】好卡直接安裝至伸出的空載台上！', 'log-green');
+      await lerpVector3(agvArmGroup, new THREE.Vector3(-1.6, 2.2, 0), 500);
+      slot1Loaded = false;
+      syncUI();
+      prober2.installedCard.visible = true;
+      prober2.installedCard.children[0].material.color.setHex(0x16a34a); // 變良品綠卡！
+      await lerpVector3(agvArmGroup, new THREE.Vector3(0, 4.6, 0), 700);
+      await lerpVector3(agvArmGroup, new THREE.Vector3(0, 1.9, 0), 400);
+
+      // 8. 載台縮回機台內部
+      log('[B-8] Prober #02 載台帶著好卡平移縮回機身內部...', 'log-cyan');
+      await lerpVector3(prober2.pccStageGroup, new THREE.Vector3(2.6, 5.8, 1.2), 900);
+
+      // 9. AGV 倒退退回安全避讓區
+      log('[B-9] AGV 倒退駛離門扇旋轉範圍...', 'log-orange');
+      await lerpVector3(agvVehicle, new THREE.Vector3(24.6, 0, 1.5), 800);
+
+      // 10. 落地門閉合
+      log('[B-10] 落地房間門旋轉閉合鎖固！正面 Load Port 保持完全獨立無干涉！', 'log-cyan');
+      await lerpRotationY(prober2.doorHingePivot, 0, 800);
+
+      // 互鎖解開：Prober #02 轉為【有好卡】綠燈！
+      prober2.status = 'HAS_GOOD';
+      syncUI();
+      log('★【Prober #02 互鎖解除】狀態轉為【有好卡】綠燈 AVAILABLE，允許送晶圓！', 'log-green');
+
+      // AGV 返航 Home 待命
+      await lerpVector3(agvVehicle, new THREE.Vector3(-6, 0, 12), 1500);
+      log('★ Prober #02 空機送好卡作業圓滿完成！AGV 返回待命！', 'log-green');
+
+      modeText.textContent = '3D 產線待命 (IDLE)';
+      isBusy = false;
+    }
+
+    // =========================================================================
+    // 流程 C: OHT 環狀天車吊運 FOUP 至綠燈機台開測
+    // =========================================================================
+    async function runOhtLoopDelivery() {
+      if (isBusy) return;
+      // 找出哪台機台有綠燈 (HAS_GOOD)
+      let target = null;
+      let targetX = 0;
+      let pName = "";
+
+      if (prober1.status === 'HAS_GOOD') {
+        target = prober1;
+        targetX = 8;
+        pName = "Prober #01";
+      } else if (prober2.status === 'HAS_GOOD') {
+        target = prober2;
+        targetX = 22;
+        pName = "Prober #02";
+      } else {
+        log('互鎖攔截: 目前沒有已裝妥好卡的綠燈機台，拒絕派送 FOUP！', 'log-red');
         return;
       }
 
       isBusy = true;
-      modeText.textContent = `步驟 6: OHT 天車吊運 FOUP 飛往 Prober #${targetProberId}`;
-      log(`OHT: 接收到 Prober #${targetProberId} 綠燈可用信號，開始吊裝 FOUP...`, 'log-cyan');
+      const loadPortX = targetX - 2.5;
+
+      modeText.textContent = `OHT 流程：天車沿環狀閉環軌道吊送 FOUP 至 ${pName}`;
+      log(`OHT: 接收到 ${pName} 綠燈信號，自 FOUP Stocker 頂部吊爪夾取 FOUP...`, 'log-cyan');
 
       await lerpVector3(ohtVehicle, new THREE.Vector3(-26, ohtRailHeight, -14), 1000);
-
-      log('OHT 吊爪垂直下降，鎖定 FOUP 頂部法蘭...', 'log-cyan');
-      await lerpVector3(ohtHoist, new THREE.Vector3(0, -5.0, 0), 1000);
-      await sleep(300);
+      await lerpVector3(ohtHoist, new THREE.Vector3(0, -5.0, 0), 900);
+      await sleep(200);
 
       activeFoup.position.set(-26, ohtRailHeight - 2.2, -14);
-      await lerpVector3(ohtHoist, new THREE.Vector3(0, -1.2, 0), 1000);
+      await lerpVector3(ohtHoist, new THREE.Vector3(0, -1.2, 0), 900);
 
-      log(`OHT 載運 FOUP 沿環狀閉環軌道滑行前往 Prober #${targetProberId} 正面 Load Port...`, 'log-orange');
-      await lerpVector3(ohtVehicle, new THREE.Vector3(loadPortX, ohtRailHeight, -14), 1600);
+      log(`OHT: 吊運 FOUP 沿空中環狀軌道飛往 ${pName} 正面 Load Port...`, 'log-orange');
+      await lerpVector3(ohtVehicle, new THREE.Vector3(loadPortX, ohtRailHeight, -14), 1500);
       activeFoup.position.set(loadPortX, ohtRailHeight - 2.2, -14);
 
       await lerpVector3(ohtVehicle, new THREE.Vector3(loadPortX, ohtRailHeight, -8.6), 1000);
       activeFoup.position.set(loadPortX, ohtRailHeight - 2.2, -8.6);
 
-      log(`OHT 鋼索放長，將 FOUP 穩妥置入 Prober #${targetProberId} 正面 Load Port！`, 'log-cyan');
-      await lerpVector3(ohtHoist, new THREE.Vector3(0, -16.5, 0), 1400);
+      log(`OHT: 鋼索放長垂直下降，將 FOUP 置入 ${pName} Load Port！`, 'log-cyan');
+      await lerpVector3(ohtHoist, new THREE.Vector3(0, -16.5, 0), 1300);
       activeFoup.position.set(loadPortX, 3.2, -8.6);
-      await sleep(300);
+      await sleep(200);
 
-      await lerpVector3(ohtHoist, new THREE.Vector3(0, -1.2, 0), 1000);
+      await lerpVector3(ohtHoist, new THREE.Vector3(0, -1.2, 0), 900);
 
       target.status = 'TESTING';
       target.wafer.visible = true;
       syncUI();
-      log(`Prober #${targetProberId} 晶圓針測全面開跑！(Wafer Testing Active)`, 'log-green');
+      log(`★ ${pName} 晶圓針測全面開跑！(Wafer Testing Active)`, 'log-green');
 
       modeText.textContent = '3D 產線待命 (IDLE)';
       isBusy = false;
     }
 
     // =========================================================================
-    // 一鍵全自動閉環 SOP 循環
+    // 一鍵全自動完整巡迴 (Prober 1 Swap -> OHT送片 -> Prober 2 送好卡 -> OHT送片)
     // =========================================================================
     async function doAutoAll() {
       if (isBusy) return;
-      log('==================================================================', 'log-cyan');
-      log('>>> 啟動真實 SOP 循環：取舊卡 ➔ 穿箱入庫 ➔ 車變空 ➔ 取好卡 ➔ 落地門開關裝卡 ➔ 綠燈送FOUP <<<', 'log-cyan');
-      log('==================================================================', 'log-cyan');
+      log('====================================================================', 'log-cyan');
+      log('>>> 啟動全自動完整巡迴：P1 Swap換卡 ➔ OHT送片 ➔ P2 送好卡 ➔ OHT送片 <<<', 'log-cyan');
+      log('====================================================================', 'log-cyan');
 
-      // 對 Prober #01 跑完整 SOP
-      setTargetProber(1);
-      await doStep1();
-      await sleep(400);
-      await doStep2();
-      await sleep(400);
-      await doStep3();
-      await sleep(400);
-      await doStep4();
-      await sleep(400);
-      await doStep5();
-      await sleep(400);
-      await doStep6();
+      // 1. Prober #01 Swap 換卡
+      await runProber1SwapFlow();
+      await sleep(600);
+
+      // 2. Prober #01 OHT 吊送 FOUP
+      await runOhtLoopDelivery();
       await sleep(800);
 
-      // 對 Prober #02 跑完整 SOP
-      setTargetProber(2);
-      await doStep1();
-      await sleep(400);
-      await doStep2();
-      await sleep(400);
-      await doStep3();
-      await sleep(400);
-      await doStep4();
-      await sleep(400);
-      await doStep5();
-      await sleep(400);
-      await doStep6();
+      // 3. Prober #02 送好卡
+      await runProber2InstallFlow();
+      await sleep(600);
 
-      log('>>> Prober 1 & Prober 2 雙機台全部完成真實閉環 SOP 與送晶圓測試！<<<', 'log-green');
+      // 4. Prober #02 OHT 吊送第二批 FOUP (複製一個 FOUP 展示)
+      log('OHT: 吊送第二批 FOUP 至 Prober #02...', 'log-cyan');
+      const foup2 = createFoupMesh("LOT: W-9922");
+      foup2.position.set(22 - 2.5, 3.2, -8.6);
+      scene.add(foup2);
+      prober2.status = 'TESTING';
+      prober2.wafer.visible = true;
+      syncUI();
+      log('★ Prober #02 晶圓針測同步開跑！', 'log-green');
+
+      log('>>> Prober 1 & Prober 2 雙機台全部完成真實工藝流程與晶圓測試！<<<', 'log-green');
     }
 
     // 重置所有狀態
@@ -1648,33 +1596,37 @@
       activeBoxInDecapper.visible = false;
       btLid.position.set(0, 5.2, 0);
 
-      [prober1, prober2].forEach(p => {
-        p.status = 'NO_CARD';
-        p.doorHingePivot.rotation.y = 0;
-        p.pccStageGroup.position.set(2.6, 5.8, 1.2);
-        p.installedCard.visible = true;
-        p.installedCard.children[0].material.color.setHex(0xe65100);
-        p.wafer.visible = false;
-      });
+      // 復原 Prober 1 (有壞卡)
+      prober1.status = 'HAS_BAD';
+      prober1.doorHingePivot.rotation.y = 0;
+      prober1.pccStageGroup.position.set(2.6, 5.8, 1.2);
+      prober1.installedCard.visible = true;
+      prober1.installedCard.children[0].material.color.setHex(0xe65100);
+      prober1.wafer.visible = false;
 
+      // 復原 Prober 2 (空的無卡)
+      prober2.status = 'EMPTY';
+      prober2.doorHingePivot.rotation.y = 0;
+      prober2.pccStageGroup.position.set(2.6, 5.8, 1.2);
+      prober2.installedCard.visible = false; // 無卡
+      prober2.wafer.visible = false;
+
+      // 復原 PC 儲位
       slotData[0].state = 'GOOD_CARD';
       slotMeshList[0].userData.boxMesh.visible = true;
       slotMeshList[0].userData.ledMesh.material.color.setHex(0x00e676);
 
-      slotData[4].state = 'DEFECT_CARD';
-      slotMeshList[4].userData.ledMesh.material.color.setHex(0xff334b);
+      slotData[3].state = 'GOOD_CARD';
+      slotMeshList[3].userData.boxMesh.visible = true;
+      slotMeshList[3].userData.ledMesh.material.color.setHex(0x00e676);
+
+      slotData[4].state = 'EMPTY_BOX';
+      slotMeshList[4].userData.ledMesh.material.color.setHex(0x38bdf8);
 
       syncUI();
       modeText.textContent = '3D 產線待命 (IDLE)';
-      log('系統所有 3D 模型位置、儲位狀態與機台互鎖已全數重置', 'log-orange');
+      log('系統已重置至初始工況：Prober 1 (有壞卡) ｜ Prober 2 (空的無卡)', 'log-orange');
     }
-
-    window.setTargetProber = function(id) {
-      targetProberId = id;
-      document.getElementById('pick-p1').classList.toggle('active', id === 1);
-      document.getElementById('pick-p2').classList.toggle('active', id === 2);
-      log(`操作目標已切換為：Prober #${id}`, 'log-cyan');
-    };
 
     window.setCameraView = function(view) {
       if (view === 'iso') {
@@ -1683,9 +1635,12 @@
       } else if (view === 'stocker') {
         lerpVector3(camera, new THREE.Vector3(-26, 20, 26), 800);
         controls.target.set(-24, 8, 12);
-      } else if (view === 'probers') {
-        lerpVector3(camera, new THREE.Vector3(12, 12, 8), 800);
+      } else if (view === 'prober1') {
+        lerpVector3(camera, new THREE.Vector3(10.6, 12, 6), 800);
         controls.target.set(10.6, 4.5, -4);
+      } else if (view === 'prober2') {
+        lerpVector3(camera, new THREE.Vector3(24.6, 12, 6), 800);
+        controls.target.set(24.6, 4.5, -4);
       } else if (view === 'oht') {
         lerpVector3(camera, new THREE.Vector3(ohtVehicle.position.x, 28, ohtVehicle.position.z + 18), 800);
         controls.target.copy(ohtVehicle.position);
@@ -1787,12 +1742,9 @@
 
     document.getElementById('btn-auto-all').addEventListener('click', doAutoAll);
     document.getElementById('btn-reset-all').addEventListener('click', doResetAll);
-    document.getElementById('btn-step-1').addEventListener('click', doStep1);
-    document.getElementById('btn-step-2').addEventListener('click', doStep2);
-    document.getElementById('btn-step-3').addEventListener('click', doStep3);
-    document.getElementById('btn-step-4').addEventListener('click', doStep4);
-    document.getElementById('btn-step-5').addEventListener('click', doStep5);
-    document.getElementById('btn-step-6').addEventListener('click', doStep6);
+    document.getElementById('btn-p1-flow').addEventListener('click', runProber1SwapFlow);
+    document.getElementById('btn-p2-flow').addEventListener('click', runProber2InstallFlow);
+    document.getElementById('btn-oht-flow').addEventListener('click', runOhtLoopDelivery);
 
     function animate() {
       requestAnimationFrame(animate);
