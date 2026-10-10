@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>晶圓測試廠 3D 全自動化物流與換卡系統 (TEL Prexa & KUKA KMR iiwa 旗艦終極版)</title>
+  <title>晶圓測試廠 3D 全自動化物流與換卡系統 (Teradyne UltraFLEXplus &amp; TEL Prexa)</title>
   <style>
     :root {
       --bg: #070c16;
@@ -156,7 +156,6 @@
       z-index: 20;
     }
 
-    /* 右側控制面板 (支援最小化收折與平滑滑入/滑出動畫) */
     #panel-controls {
       top: 14px;
       right: 14px;
@@ -279,7 +278,6 @@
       50% { opacity: 0.5; transform: scale(1.3); }
     }
 
-    /* 視角切換列 */
     #panel-camera {
       bottom: 16px;
       left: 16px;
@@ -632,7 +630,7 @@
       <div class="brand-icon">3D</div>
       <div class="brand-info">
         <h1>晶圓測試廠 3D 全自動化物流與換卡系統</h1>
-        <p>TEL Prexa 針測機 ｜ KUKA KMR iiwa 娃娃機下夾 ｜ 天花板懸吊高速 OHT ｜ 卡箱密合全遮蔽</p>
+        <p>Teradyne 翻轉測試頭 ｜ TEL Prexa 深黑腔體 ｜ KUKA 娃娃機下夾 ｜ 天花板懸吊高速 OHT</p>
       </div>
     </div>
     <div class="header-status">
@@ -661,7 +659,7 @@
       </div>
       <div class="modal-row">
         <span>探針卡狀態：</span>
-        <span id="modal-card-status">良品好卡 (藏於上蓋中、下盒上)</span>
+        <span id="modal-card-status">良品好卡 (藏於深罩上蓋內、下盒上)</span>
       </div>
       <div class="modal-row">
         <span>探針卡型號：</span>
@@ -676,17 +674,17 @@
 
     <div class="hud-panel" id="panel-camera">
       <button class="btn-cam" onclick="setCameraView('iso')">等角全景 (Isometric)</button>
-      <button class="btn-cam" onclick="setCameraView('prober1')">看 Prober 1 (TEL Prexa &amp; Tester)</button>
+      <button class="btn-cam" onclick="setCameraView('prober1')">看 Prober 1 (Teradyne 壓頂 &amp; 暗室吐盤)</button>
       <button class="btn-cam" onclick="setCameraView('prober2')">看 Prober 2 (空卡機台)</button>
-      <button class="btn-cam" onclick="setCameraView('kuka')">看 KUKA KMR iiwa 娃娃機手爪</button>
+      <button class="btn-cam" onclick="setCameraView('kuka')">看 KUKA MR 車防重疊平台</button>
       <button class="btn-cam" onclick="setCameraView('pcstock')">看 PC 85%透明倉儲</button>
       <button class="btn-cam" onclick="setCameraView('ohtTop')">看 天花板懸吊天軌 (直落Load Port)</button>
     </div>
 
     <div class="footer-hints">
-      <div>🏗️ <span>天花板懸吊</span> 地面零立柱，天軌直落正對無遮蔽 Load Port 放 FOUP</div>
-      <div>🤖 <span>KUKA MR 車</span> 常態彎曲向下，娃娃機式由上往下夾取裸卡</div>
-      <div>🔬 <span>TEL Prexa</span> 實機外觀 ＋ 獨立 Tester 測試機 ＋ PC 探針卡下移至腰胸高度</div>
+      <div>🔬 <span>Teradyne 測試頭</span> 翻轉 180 度壓合在 Prober 頂部Direct Docking</div>
+      <div>🚪 <span>深黑內部暗腔</span> 白門向外敞開，滑台如光碟機托盤自黑暗平滑吐出</div>
+      <div>🤖 <span>KUKA MR 車</span> 車身加寬兩卡不重疊，娃娃機式由上往下垂直夾取</div>
     </div>
 
     <button id="btn-expand-panel" class="floating-expand-btn" title="展開控制台" onclick="toggleControlPanel(false)">
@@ -731,7 +729,7 @@
           </div>
         </div>
         <div style="font-size:10px; color:#94a3b8; line-height:1.4;">
-          💡 <strong>異步解耦互鎖：</strong>PC 車換好卡閉門轉綠，OHT 天車才自天花板天軌直落送 FOUP；MR 車同時載壞卡返航，互不相依卡死！
+          💡 <strong>沉穩慢動作 (0.5x)：</strong>開關門與光碟機吐盤時間調為 1,600ms；換好卡閉門轉綠，OHT 天車直落送 FOUP，MR 車同時返航！
         </div>
       </div>
 
@@ -754,19 +752,19 @@
           <span style="font-size:9px; color:var(--text-muted);">PHASE</span>
         </div>
         <button class="btn btn-outline" id="btn-p1-flow">
-          A. Prober #01 流程：開蓋出卡置洞口 ➔ 空箱即回庫 ➔ KUKA 娃娃機下夾 ➔ 房門外旋換卡
+          A. Prober #01 流程：出卡至洞口 ➔ 空箱回庫 ➔ 娃娃機下夾 ➔ 0.5x 房門外旋換卡
         </button>
         <button class="btn btn-outline" id="btn-p2-flow">
-          B. Prober #02 流程：出卡至洞口 ➔ 空箱即回庫 ➔ KUKA 下夾 ➔ Prexa 空機裝卡
+          B. Prober #02 流程：出卡至洞口 ➔ 空箱回庫 ➔ 娃娃機下夾 ➔ 0.5x 慢動作裝卡
         </button>
         <button class="btn btn-outline" id="btn-oht-flow">
-          C. OHT 流程：高速巡航天車正上方直降夾取 FOUP ➔ 正上方直落放入無遮蔽 Load Port
+          C. OHT 流程：高速天車正上方直降夾取 FOUP ➔ 正上方直落放入無遮蔽 Load Port
         </button>
       </div>
 
       <div>
         <div class="section-title">
-          <span>KUKA MR 車載雙卡槽狀態</span>
+          <span>KUKA MR 車雙卡槽狀態 (防重疊)</span>
           <span style="font-size:9px; color:#ff5722;">iiwa 7-AXIS</span>
         </div>
         <div class="slot-grid">
@@ -788,9 +786,9 @@
         </div>
         <div class="log-terminal" id="log-box">
           <div class="log-line log-cyan">[INIT] 3D 無塵室自動化產線連線完成</div>
-          <div class="log-line">[AMHS OHT] 天花板懸吊軌道就緒，正對無遮蔽 Load Port 正上方</div>
-          <div class="log-line">[ROBOT MR] KUKA KMR iiwa 常態彎曲向下姿態 ＋ 娃娃機式垂直下夾就緒</div>
-          <div class="log-line">[PROBER] TEL Prexa 晶圓針測機 (房門向外敞開 &amp; 獨立 Tester) 就緒</div>
+          <div class="log-line">[TEST CELL] Teradyne UltraFLEXplus 巨型測試頭 Direct Docking 壓頂就緒</div>
+          <div class="log-line">[PROBER] TEL Prexa 黑色內部暗室腔體 ＋ 光碟機式吐盤 (0.5x速) 就緒</div>
+          <div class="log-line">[ROBOT MR] KUKA 加寬防重疊車身 ＋ 娃娃機式由上往下夾爪就緒</div>
         </div>
       </div>
     </div>
@@ -821,8 +819,8 @@
     controls.dampingFactor = 0.05;
     controls.maxPolarAngle = Math.PI / 2.05;
     controls.minDistance = 10;
-    controls.maxDistance = 150;
-    controls.target.set(4, 5.5, 0);
+    controls.maxDistance = 160;
+    controls.target.set(6, 6.0, 0);
 
     const ambientLight = new THREE.AmbientLight(0x283a5e, 2.2);
     scene.add(ambientLight);
@@ -845,20 +843,20 @@
     // =========================================================================
     // 2. 地板與地面 AGV 導引路線
     // =========================================================================
-    const floorGeo = new THREE.PlaneGeometry(130, 95);
+    const floorGeo = new THREE.PlaneGeometry(140, 100);
     const floorMat = new THREE.MeshStandardMaterial({ color: 0x0a101d, roughness: 0.8, metalness: 0.2 });
     const floor = new THREE.Mesh(floorGeo, floorMat);
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     scene.add(floor);
 
-    const grid = new THREE.GridHelper(130, 65, 0x1e293b, 0x111c2e);
+    const grid = new THREE.GridHelper(140, 70, 0x1e293b, 0x111c2e);
     grid.position.y = 0.01;
     scene.add(grid);
 
-    // 地面 MR 車導引線 (完全暢通，無任何立柱！)
+    // 地面 MR 車導引線 (完全暢通，地面無任何立柱！)
     const agvTrackMat = new THREE.MeshBasicMaterial({ color: 0x00d2ff, transparent: true, opacity: 0.35 });
-    const agvMainTrack = new THREE.Mesh(new THREE.PlaneGeometry(62, 1.4), agvTrackMat);
+    const agvMainTrack = new THREE.Mesh(new THREE.PlaneGeometry(70, 1.4), agvTrackMat);
     agvMainTrack.rotation.x = -Math.PI / 2;
     agvMainTrack.position.set(6, 0.02, 12);
     scene.add(agvMainTrack);
@@ -875,7 +873,6 @@
 
     // =========================================================================
     // 3. 天花板桁架懸吊系統 & 高速 OHT 閉環軌道 (完全從天花板吊掛 ｜ 正對 Load Port 直下放)
-    // 依據使用者上傳晶圓廠實景圖：
     // - 柱子 100% 從天花板鋼構向下懸吊，地面無任何立柱！
     // - 軌道後段直線正好落在 Z = -8.6，正對 FOUP Stocker 出料口與 Prober Load Port 正上方！
     // =========================================================================
@@ -1136,8 +1133,6 @@
 
     // =========================================================================
     // 7. PC STOCKER (85%透明外牆 ｜ 上下分層 ｜ 10 儲位集中上半部 ｜ 開箱台乾淨無多餘箱)
-    // 滿足使用者規範：
-    // - 出卡至洞口後，空箱立刻密合回庫（深灰燈），開箱台騰空，完全非相依！
     // =========================================================================
     const pcStockerGroup = new THREE.Group();
     pcStockerGroup.position.set(-26, 0, 12);
@@ -1228,7 +1223,7 @@
       slotMeshList.push(clickBox);
     });
 
-    // 下半部開箱轉載核心空間 (平時為乾淨空載台，無任何重複假箱！上蓋/卡/下盒100%在庫存儲)
+    // 下半部開箱轉載核心空間
     const lowerWorkcell = new THREE.Group();
     pcStockerGroup.add(lowerWorkcell);
 
@@ -1275,43 +1270,100 @@
     let currentWorkcellBox = null;
 
     // =========================================================================
-    // 8. 晶圓針測機 (PROBER #01 & PROBER #02) ＋ 獨立 TESTER 測試主機機櫃
-    // 100% 依據使用者實景照片【TEL Prexa】全貌重構：
-    // - 間距拉開，走道寬敞開闊
-    // - 左側純白主機 (TEL Test System)，附旋轉觸控螢幕、左操作柱與雙圓孔
-    // - 正面白門以左鉸鏈向外 90° 敞開（像房間門一樣向外開門）！
-    // - PC 探針卡放置位置下移至人體腰胸高度 (Y = 4.0)，符合人體工學與 AGV 手臂對齊！
-    // - 右側炭黑 Prexa Load Port 【完全向上開放無遮蔽】，360度清晰可見 FOUP 直下直上！
-    // - 每台 Prober 增設專屬 Tester 測試主機機櫃（帶粗重電纜連通）！
+    // 8. 晶圓針測機 (PROBER #01 & PROBER #02) ＋ TERADYNE ULTRAFLEXPLUS 巨型測試頭翻轉壓頂
+    // 100% 依據使用者實景照片【Teradyne UltraFLEXplus】與【TEL Prexa】：
+    // - 測試機頭翻轉 180° 朝下，直接雄偉壓合跨坐在 Prober 頂部 (Direct Docking)！
+    // - 後方大型 Teradyne 主機機櫃 ＋ 支撐懸臂 ＋ 粗厚灰色柔性低損耗蛇腹訊號電纜排線
+    // - Prober 門後建構【深黑空洞內部腔體 (Chamber Pocket)】，開門後看見深邃黑色暗室！
+    // - 雙導軌滑台如【光碟機托盤】般自黑暗中平滑伸出至外部光線下！
+    // - 三色燈號桿移至【左側操作柱與觸控螢幕正上方】！
+    // - 右側 Prexa Load Port 【完全向上開放無遮蔽】，360度清晰可見 FOUP 直下直上！
     // =========================================================================
     function createTelPrexaProber(proberId, posX, posZ, initialStatus) {
       const g = new THREE.Group();
       g.position.set(posX, 0, posZ);
-      g.userData = { name: `TEL Prexa 晶圓針測機 (${proberId})`, id: proberId };
+      g.userData = { name: `TEL Prexa & Teradyne UltraFLEXplus (${proberId})`, id: proberId };
 
-      // [獨立模組] Tester 測試主機機櫃 (Advantest / Teradyne 工業級機櫃，置於 Prober 後方)
-      const testerRack = new THREE.Mesh(
-        new THREE.BoxGeometry(6.2, 9.8, 4.8),
-        new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.4 })
+      // [獨立模組 1] 後方 Teradyne UltraFLEXplus 大型測試主機機櫃 (Mainframe Cabinet)
+      const teradyneMainframe = new THREE.Group();
+      teradyneMainframe.position.set(-0.5, 0, -6.8);
+      g.add(teradyneMainframe);
+
+      const mainframeCabinet = new THREE.Mesh(
+        new THREE.BoxGeometry(6.6, 9.8, 4.6),
+        new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.35, roughness: 0.3 })
       );
-      testerRack.position.set(-2.0, 4.9, -5.6);
-      g.add(testerRack);
+      mainframeCabinet.position.y = 4.9;
+      teradyneMainframe.add(mainframeCabinet);
 
-      // Tester 機櫃通風散熱格柵與液晶監控螢幕
-      const testerScreen = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 1.8), new THREE.MeshBasicMaterial({ color: 0x0284c7 }));
-      testerScreen.position.set(-2.0, 7.2, -3.18);
-      g.add(testerScreen);
+      // 左側大型黑色散熱冷卻格柵塔 (Cooling Louvers Tower)
+      const coolingTower = new THREE.Mesh(
+        new THREE.BoxGeometry(2.4, 8.4, 4.4),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9, roughness: 0.7 })
+      );
+      coolingTower.position.set(-2.0, 4.9, 0.05);
+      teradyneMainframe.add(coolingTower);
 
-      // 粗重低損耗測試信號電纜排線 (Test Cable Conduit 連通至 Prober 頂部)
+      // 銘牌：TERADYNE & UltraFLEXplus
+      const brandPlate = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.4, 1.2),
+        new THREE.MeshBasicMaterial({ color: 0x0284c7 })
+      );
+      brandPlate.position.set(1.4, 7.5, 2.32);
+      teradyneMainframe.add(brandPlate);
+
+      // [獨立模組 2] 重型關節支撐機械手臂 (Manipulator Arm & Support Rails)
+      const manipulatorArm = new THREE.Mesh(
+        new THREE.BoxGeometry(1.2, 1.6, 4.4),
+        new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.85, roughness: 0.3 })
+      );
+      manipulatorArm.position.set(-0.5, 8.5, -3.2);
+      g.add(manipulatorArm);
+
+      // 粗大厚實灰色蛇腹信號電纜束 (Heavy Flexible Cable Snake Conduits 連通機櫃至測試頭)
       const cableCurve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(-2.0, 6.5, -3.2),
-        new THREE.Vector3(-2.0, 8.8, -1.8),
-        new THREE.Vector3(-2.0, 8.0, 0)
+        new THREE.Vector3(1.8, 8.5, -4.5),
+        new THREE.Vector3(1.5, 11.2, -3.2),
+        new THREE.Vector3(-1.8, 10.5, -0.5)
       ]);
-      const cableConduit = new THREE.Mesh(new THREE.TubeGeometry(cableCurve, 20, 0.28, 12, false), new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9 }));
-      g.add(cableConduit);
+      const cableBundle = new THREE.Mesh(new THREE.TubeGeometry(cableCurve, 24, 0.45, 12, false), new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.7 }));
+      g.add(cableBundle);
+
+      // [獨立模組 3] ★ TERADYNE ULTRAFLEXPLUS 巨型測試頭 (翻轉 180° Direct Docking 壓合在 Prober 頂部！)
+      // 尺寸雄偉龐大 (5.4 x 4.2 x 3.0)，白灰色箱體搭配黑色四角立柱修邊
+      const testHeadGroup = new THREE.Group();
+      testHeadGroup.position.set(-2.0, 9.2, 0); // 壓頂座落在 Prober 白色主機正上方！
+      g.add(testHeadGroup);
+
+      const testHeadBody = new THREE.Mesh(
+        new THREE.BoxGeometry(5.4, 2.8, 4.6),
+        new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.35, roughness: 0.25 })
+      );
+      testHeadBody.castShadow = true;
+      testHeadGroup.add(testHeadBody);
+
+      // 黑色四角立柱修邊與加強筋
+      [[-2.65, 2.25], [2.65, 2.25], [-2.65, -2.25], [2.65, -2.25]].forEach(([cx, cz]) => {
+        const edgePillar = new THREE.Mesh(new THREE.BoxGeometry(0.35, 2.85, 0.35), new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9 }));
+        edgePillar.position.set(cx, 0, cz);
+        testHeadGroup.add(edgePillar);
+      });
+
+      // 側面藍色 TERADYNE UltraFLEXplus 塗裝標識
+      const thLogo = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.8), new THREE.MeshBasicMaterial({ color: 0x0284c7 }));
+      thLogo.position.set(0, 0, 2.32);
+      testHeadGroup.add(thLogo);
+
+      // 測試頭底面（翻轉朝下對接口）金色 Pogo Pin 探針排針陣列環 (DIB Interface)
+      const pogoPinRing = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.8, 1.8, 0.15, 32),
+        new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.95 })
+      );
+      pogoPinRing.position.y = -1.45;
+      testHeadGroup.add(pogoPinRing);
 
       // [模組 A] 左側白色主機 (TEL Test System Main Body)
+      // 包含【內部深黑空洞腔體 (Chamber Pocket)】！門開後看見深邃黑色暗室！
       const telBody = new THREE.Mesh(
         new THREE.BoxGeometry(5.6, 7.6, 6.4),
         new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.35, roughness: 0.3 })
@@ -1320,15 +1372,24 @@
       telBody.castShadow = true;
       g.add(telBody);
 
-      // 頂部圓形測試頭夾持環 (Direct Docking Chuck Ring)
-      const chuckRing = new THREE.Mesh(
-        new THREE.CylinderGeometry(2.1, 2.2, 0.4, 36),
-        new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.85 })
+      // ★ 門後內部深黑消光腔體 (如使用者附圖 XGT-9000SL 黑色內部空洞暗室)
+      const darkPocket = new THREE.Mesh(
+        new THREE.BoxGeometry(4.6, 5.2, 4.8),
+        new THREE.MeshStandardMaterial({ color: 0x050811, metalness: 0.9, roughness: 0.9 })
       );
-      chuckRing.position.set(-2.0, 7.7, 0);
-      g.add(chuckRing);
+      darkPocket.position.set(-2.0, 3.8, 1.0);
+      g.add(darkPocket);
 
-      // 左側控制柱 (Control Column with Screen & Buttons)
+      // 內部精密伺服滑軌導軌 (內部機械結構)
+      const innerRailL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 4.4), new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.95 }));
+      innerRailL.position.set(-3.6, 3.9, 1.0);
+      g.add(innerRailL);
+
+      const innerRailR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 4.4), new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.95 }));
+      innerRailR.position.set(-0.4, 3.9, 1.0);
+      g.add(innerRailR);
+
+      // 左側控制柱 (Control Column with Screen, Buttons & Signal Tower)
       const leftPillar = new THREE.Mesh(
         new THREE.BoxGeometry(1.2, 7.6, 6.4),
         new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.5, roughness: 0.3 })
@@ -1352,6 +1413,23 @@
       monitorScreen.rotation.y = 0.2;
       g.add(monitorScreen);
 
+      // ★【燈號桿移至左側】：三色信號燈號桿置於左側控制柱與操作螢幕上方！
+      const tMast = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.5, 16), new THREE.MeshStandardMaterial({ color: 0x64748b }));
+      tMast.position.set(-5.4, 10.2, 1.0);
+      g.add(tMast);
+
+      const lightRed = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16), new THREE.MeshBasicMaterial({ color: initialStatus === 'HAS_BAD' ? 0xff334b : 0x330000 }));
+      lightRed.position.set(-5.4, 10.8, 1.0);
+      g.add(lightRed);
+
+      const lightYellow = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16), new THREE.MeshBasicMaterial({ color: initialStatus === 'EMPTY' ? 0xffaa00 : 0x332200 }));
+      lightYellow.position.set(-5.4, 11.3, 1.0);
+      g.add(lightYellow);
+
+      const lightGreen = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16), new THREE.MeshBasicMaterial({ color: 0x003300 }));
+      lightGreen.position.set(-5.4, 11.8, 1.0);
+      g.add(lightGreen);
+
       // 急停按鈕 (E-Stop)
       const estopYellow = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.08, 16), new THREE.MeshBasicMaterial({ color: 0xfacc15 }));
       estopYellow.rotation.x = Math.PI / 2;
@@ -1372,9 +1450,9 @@
       });
 
       // 正面潔淨白門 (Door with 2 Hinges on Left, Recessed Handle on Right)
-      // 【開門效果修正】：以左側鉸鏈為軸心，向外旋轉 90° 開門（旋轉向使用者通道，清晰可見）！
+      // 【開門效果】：以左側鉸鏈為軸心，流暢向外旋轉 90° 敞開（像房間門一樣向外打開）！
       const doorHingePivot = new THREE.Group();
-      doorHingePivot.position.set(-4.7, 0, 3.25); // 左側鉸鏈旋轉軸
+      doorHingePivot.position.set(-4.7, 0, 3.25); // 左鉸鏈軸
       g.add(doorHingePivot);
 
       const doorPanel = new THREE.Mesh(
@@ -1397,9 +1475,8 @@
       doorPanel.add(handle);
 
       // [模組 B] 右側炭黑色 Prexa Load Port (【完全無遮蔽、全開放式平台】)
-      // 依使用者規範：頂部 100% 垂直淨空無遮罩，清楚呈現 FOUP 直下直上座落過程！
       const prexaBody = new THREE.Mesh(
-        new THREE.BoxGeometry(3.6, 4.2, 6.4), // 高度壓低至 4.2，頂部完全向上敞開！
+        new THREE.BoxGeometry(3.6, 4.2, 6.4),
         new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.3 })
       );
       prexaBody.position.set(2.8, 2.1, 0);
@@ -1413,21 +1490,21 @@
       loadPortStage.position.set(2.8, 4.45, 1.9); // 正對天軌 Z = -8.6
       g.add(loadPortStage);
 
-      // 3 支高精度定位鎖定銷 (Kinematic Pins)
+      // 3 支定位鎖定銷 (Kinematic Pins)
       [[-0.9, -0.9], [0.9, -0.9], [0, 0.9]].forEach(([px, pz]) => {
         const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.25, 12), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.95 }));
         pin.position.set(px, 0.35, pz);
         loadPortStage.add(pin);
       });
 
-      // 後方自動晶圓盒開門機構 (FOUP Opener Backplate)
+      // 後方自動開門機構背板
       const foupOpenerBack = new THREE.Mesh(new THREE.BoxGeometry(3.0, 3.2, 0.3), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
       foupOpenerBack.position.set(2.8, 6.2, 0.2);
       g.add(foupOpenerBack);
 
-      // [PC 換卡滑台] 探針卡放置位置下移至人體腰胸高度 (Y = 4.0)
+      // ★ [PC 光碟機式吐盤] 探針卡載盤自深黑暗腔內部平滑伸出 (Y = 4.0 腰胸高度)
       const pccStageGroup = new THREE.Group();
-      pccStageGroup.position.set(-2.0, 4.0, 0.5); // 下移至腰胸高度！
+      pccStageGroup.position.set(-2.0, 4.0, 0.5); // 平時縮在黑暗腔體內部！
       g.add(pccStageGroup);
 
       const rail1 = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 6.2, 12), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.95 }));
@@ -1440,6 +1517,7 @@
       rail2.position.set(1.4, -0.2, 0);
       pccStageGroup.add(rail2);
 
+      // 光碟機托盤本體 (黑銀陽極科技滑盤)
       const trayPlatform = new THREE.Mesh(
         new THREE.BoxGeometry(3.6, 0.35, 3.6),
         new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.85, roughness: 0.2 })
@@ -1451,23 +1529,6 @@
       installedCard.position.set(0, 0.35, 0);
       installedCard.visible = (initialStatus !== 'EMPTY');
       pccStageGroup.add(installedCard);
-
-      // 三色塔燈
-      const tMast = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.5, 16), new THREE.MeshStandardMaterial({ color: 0x64748b }));
-      tMast.position.set(4.2, 6.8, 2.8);
-      g.add(tMast);
-
-      const lightRed = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16), new THREE.MeshBasicMaterial({ color: initialStatus === 'HAS_BAD' ? 0xff334b : 0x330000 }));
-      lightRed.position.set(4.2, 7.4, 2.8);
-      g.add(lightRed);
-
-      const lightYellow = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16), new THREE.MeshBasicMaterial({ color: initialStatus === 'EMPTY' ? 0xffaa00 : 0x332200 }));
-      lightYellow.position.set(4.2, 7.9, 2.8);
-      g.add(lightYellow);
-
-      const lightGreen = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16), new THREE.MeshBasicMaterial({ color: 0x003300 }));
-      lightGreen.position.set(4.2, 8.4, 2.8);
-      g.add(lightGreen);
 
       const wafer = new THREE.Mesh(
         new THREE.CylinderGeometry(1.9, 1.9, 0.08, 32),
@@ -1492,25 +1553,25 @@
       };
     }
 
-    // 擺放 Prober #01 與 Prober #02 (拉大間距：X=6.5 與 X=26.5，Load Port 剛好落在 Z = -8.6 正對天軌！)
+    // 擺放 Prober #01 與 Prober #02 (加大機台間距：X=6.5 與 X=26.5，Load Port 剛好落在 Z = -8.6 正對天軌！)
     const prober1 = createTelPrexaProber("Prober_01", 6.5, -10.5, "HAS_BAD"); // 初始有壞卡
     const prober2 = createTelPrexaProber("Prober_02", 26.5, -10.5, "EMPTY");  // 初始空卡
 
     // =========================================================================
-    // 9. KUKA KMR iiwa 協作型移動機器人 (100% 依據使用者上傳實機圖片重構)
+    // 9. KUKA KMR iiwa 協作型移動機器人 (車身加寬放大 ｜ 兩卡徹底防重疊 ｜ 娃娃機下夾姿態)
     // 滿足使用者規範：
-    // - 手臂常態為【拱門般弧形彎曲向下】(絕不直立！如參考圖)
-    // - 手腕夾爪朝下，採用【娃娃機式由上往下垂直夾取】
-    // - 裸卡放入車身放置區後，車輛才啟動移動！
+    // - 車身適度拉大加寬，Slot 1 與 Slot 2 中心距拉開至 4.0，兩張卡片完全獨立不重疊！
+    // - 手臂常態維持【天鵝頸般拱形彎曲向下】(絕不直立！如參考圖)
+    // - 娃娃機式由上往下垂直下探夾爪
     // =========================================================================
     const agvVehicle = new THREE.Group();
     agvVehicle.position.set(-6, 0, 12);
-    agvVehicle.userData = { name: "KUKA KMR iiwa 半導體移動協作機器人" };
+    agvVehicle.userData = { name: "KUKA KMR iiwa 半導體移動協作機器人 (加寬防重疊版)" };
     scene.add(agvVehicle);
 
-    // 深灰重型防撞底座 (Dark Gray Chassis with Hidden Wheels)
+    // 深灰重型防撞底座 (長度加寬至 7.6 x 5.0，承載面積充裕)
     const agvChassis = new THREE.Mesh(
-      new THREE.BoxGeometry(6.6, 0.7, 4.6),
+      new THREE.BoxGeometry(7.6, 0.7, 5.0),
       new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.3 })
     );
     agvChassis.position.y = 0.35;
@@ -1518,15 +1579,15 @@
     agvVehicle.add(agvChassis);
 
     // 四角安全雷射光達 (Safety LiDAR Scanners) & 黃色警示標記
-    [[-3.2, 2.2], [3.2, 2.2], [-3.2, -2.2], [3.2, -2.2]].forEach(([lx, lz]) => {
+    [[-3.7, 2.4], [3.7, 2.4], [-3.7, -2.4], [3.7, -2.4]].forEach(([lx, lz]) => {
       const lidar = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9 }));
       lidar.position.set(lx, 0.4, lz);
       agvVehicle.add(lidar);
     });
 
-    // 純白流線型無塵室機身主體 (KUKA Cleanroom Upper Body)
+    // 純白流線型無塵室機身主體 (寬敞加寬機身)
     const agvWhiteBody = new THREE.Mesh(
-      new THREE.BoxGeometry(6.4, 2.0, 4.4),
+      new THREE.BoxGeometry(7.4, 2.0, 4.8),
       new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.3, roughness: 0.25 })
     );
     agvWhiteBody.position.y = 1.7;
@@ -1535,32 +1596,33 @@
 
     // 車側通風散熱百葉槽與 KUKA 橘色 Logo 標誌
     const kukaLogo = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.4, 0.5),
+      new THREE.PlaneGeometry(1.6, 0.55),
       new THREE.MeshBasicMaterial({ color: 0xff5722 })
     );
-    kukaLogo.position.set(-2.2, 2.3, 2.22);
+    kukaLogo.position.set(-2.6, 2.3, 2.42);
     agvVehicle.add(kukaLogo);
 
     // 階梯式頂台：後方升起底座 (安裝機械臂)
     const armPedestal = new THREE.Mesh(
-      new THREE.BoxGeometry(2.4, 0.8, 4.2),
+      new THREE.BoxGeometry(2.4, 0.8, 4.6),
       new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.4 })
     );
-    armPedestal.position.set(1.9, 3.1, 0);
+    armPedestal.position.set(2.4, 3.1, 0);
     agvVehicle.add(armPedestal);
 
-    // 前方下沉承載工作台：雙工位定位槽 (Slot 1 好卡 / Slot 2 壞卡)
-    const agvSlot1Deck = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.2, 3.2), new THREE.MeshStandardMaterial({ color: 0x166534, metalness: 0.7 }));
-    agvSlot1Deck.position.set(-1.8, 2.8, 0);
+    // ★【兩卡徹底防重疊】：前方加寬承載平台，中心距拉大至 4.0 單位！
+    // Slot 1 (新好卡槽) 設於 X = -2.2 ； Slot 2 (舊壞卡槽) 設於 X = 1.8，間距 4.0 > 卡徑 3.0，完全無重疊！
+    const agvSlot1Deck = new THREE.Mesh(new THREE.CylinderGeometry(1.65, 1.65, 0.2, 32), new THREE.MeshStandardMaterial({ color: 0x166534, metalness: 0.7 }));
+    agvSlot1Deck.position.set(-2.2, 2.8, 0);
     agvVehicle.add(agvSlot1Deck);
 
-    const agvSlot2Deck = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.2, 3.2), new THREE.MeshStandardMaterial({ color: 0x9a3412, metalness: 0.7 }));
-    agvSlot2Deck.position.set(0.1, 2.8, 0);
+    const agvSlot2Deck = new THREE.Mesh(new THREE.CylinderGeometry(1.65, 1.65, 0.2, 32), new THREE.MeshStandardMaterial({ color: 0x9a3412, metalness: 0.7 }));
+    agvSlot2Deck.position.set(1.8, 2.8, 0);
     agvVehicle.add(agvSlot2Deck);
 
     // 經典 KUKA LBR iiwa 白橘相間 7 軸機械手臂結構
     const kukaArmRoot = new THREE.Group();
-    kukaArmRoot.position.set(1.9, 3.5, 0); // 手臂基座
+    kukaArmRoot.position.set(2.4, 3.5, 0); // 手臂基座
     agvVehicle.add(kukaArmRoot);
 
     // J1: 旋轉底座 (Base Turret)
@@ -1619,14 +1681,14 @@
       kukaGripper.add(cup);
     });
 
-    // 車載卡片
+    // 車載兩張卡片 (分別安放在 Slot 1 與 Slot 2，中心距 4.0，徹底零重疊！)
     const cardOnAgvSlot1 = createBareCardMesh(0x16a34a, "PC-GOOD-88");
-    cardOnAgvSlot1.position.set(-1.8, 3.0, 0);
+    cardOnAgvSlot1.position.set(-2.2, 3.0, 0);
     cardOnAgvSlot1.visible = false;
     agvVehicle.add(cardOnAgvSlot1);
 
     const cardOnAgvSlot2 = createBareCardMesh(0xe65100, "PC-BAD-01");
-    cardOnAgvSlot2.position.set(0.1, 3.0, 0);
+    cardOnAgvSlot2.position.set(1.8, 3.0, 0);
     cardOnAgvSlot2.visible = false;
     agvVehicle.add(cardOnAgvSlot2);
 
@@ -1636,15 +1698,14 @@
     cardOnGripper.visible = false;
     kukaGripper.add(cardOnGripper);
 
-    // 設定 KUKA 手臂常態【彎曲向下姿態】(100% 還原使用者提供圖片，絕不直立！)
-    // Shoulder: 前傾 0.45, Elbow: 彎曲 1.6, Wrist: 垂直下指 -2.05
+    // 設定 KUKA 手臂常態【天鵝頸般拱形彎曲向下姿態】(100% 還原圖片，絕不直立！)
     function setKukaRestPose() {
       kukaArmRoot.rotation.y = 0;
       shoulderPivot.rotation.x = -0.35;
       elbowPivot.rotation.x = 1.65;
       wristPivot.rotation.x = -1.3;
     }
-    setKukaRestPose(); // 初始即為彎曲向下！
+    setKukaRestPose();
 
     // =========================================================================
     // 10. 狀態管理與動畫控制
@@ -1784,7 +1845,7 @@
       });
     }
 
-    // KUKA 手臂多關節運動學（維持拱形彎曲向下，絕不直立！手腕始終垂直朝下娃娃機式夾取）
+    // KUKA 手臂多關節運動學 (維持拱形彎曲向下，絕不直立！手腕垂直朝下娃娃機式夾取)
     function setKukaArmPose(baseRot, shoulderRotX, elbowRotX, wristRotX, duration = 600) {
       return new Promise(res => {
         const st = performance.now();
@@ -1851,15 +1912,15 @@
     // =========================================================================
     // 流程 A: Prober #01 SWAP 換卡全流程 (完全落實解耦與非相依性)
     // 1. 開蓋出卡至洞口 ➔ 空箱【非相依立刻蓋合回庫】(開箱台清空！)
-    // 2. KUKA MR 車娃娃機由上往下夾卡入車槽 ➔ 手臂復位 ➔ 車輛出發
-    // 3. Prober 白門【向外 90 度敞開】➔ 滑台伸出 ➔ 換卡 ➔ 閉門轉綠
+    // 2. KUKA MR 車娃娃機由上往下夾卡入車槽 (Slot 1 與 2 完全防重疊)
+    // 3. Prober 白門【向外 90 度敞開】(0.5x 慢動作 1600ms) ➔ 深黑暗室中光碟機托盤吐出 (1600ms)
     // 4. 【雙線並行解耦】：OHT 直落送 FOUP ；MR 車同時返航 Stocker！
     // 5. 車快到 Stocker ➔ 才叫空箱接卡 ➔ 密合回庫 Slot 05！
     // =========================================================================
     async function runProber1SwapFlow() {
       if (isBusy) return;
       isBusy = true;
-      modeText.textContent = '執行中：Prober #01 SWAP 換卡流程 (解耦並行 ＋ 娃娃機下夾 ＋ 房門外旋)';
+      modeText.textContent = '執行中：Prober #01 SWAP 換卡流程 (0.5x速房門外旋 ＋ 暗室吐盤 ＋ 雙卡防重疊)';
       log('========================================================', 'log-cyan');
       log('>>> 開始執行 Prober #01【解耦非相依 SWAP 換卡全流程】<<<', 'log-cyan');
       log('========================================================', 'log-cyan');
@@ -1897,7 +1958,7 @@
       await lerpVector3(bareCardOnPortB, new THREE.Vector3(-17.8, 4.1, 13.6), 700);
       await lerpVector3(stockerArmGroup, new THREE.Vector3(0, 6.8, 1.6), 500);
 
-      // 4. ★【非相依解耦核心】：卡置洞口後，空箱立刻蓋合密閉，升降機送回 Stocker 儲放區，開箱台立即清空！
+      // 4. ★【非相依解耦】：卡置洞口後，空箱立刻蓋合密閉，升降機送回 Stocker 儲放區，開箱台立即清空！
       log('[A-4] ★【非相依獨立運作】好卡已在洞口！空箱立即降下密合，由升降機送回儲放區 (開箱台騰空)！', 'log-green');
       await lerpVector3(lidMesh, new THREE.Vector3(0, 0.85, 0), 400); // 密合狀態
       // 送回 Slot 01 作為備用空箱 (深灰燈)
@@ -1909,8 +1970,8 @@
       await lerpVector3(elevatorCarriage, new THREE.Vector3(0, 3.7, 1.6), 500);
       currentWorkcellBox = null;
 
-      // 5. 【MR 車獨立取卡】：KUKA 手臂以娃娃機垂直朝下夾爪，自上方垂直下夾洞口好卡入車槽
-      log('[A-5] KUKA MR 車在洞口以【娃娃機由上往下垂直下探夾爪】吸取好卡，提昇放入車身 Slot 1！', 'log-orange');
+      // 5. 【MR 車獨立取卡】：KUKA 手臂以娃娃機垂直朝下夾爪，自上方垂直下夾洞口好卡入車身 Slot 1 (防重疊)
+      log('[A-5] KUKA MR 車在洞口以【娃娃機垂直朝下夾爪】吸取好卡，放入車身【Slot 1 (完全防重疊)】！', 'log-orange');
       await lerpVector3(agvVehicle, new THREE.Vector3(-10, 0, 13.6), 700);
 
       // 手臂自彎曲向下姿態微幅探出，手腕垂直朝下娃娃機夾取！
@@ -1919,7 +1980,7 @@
       cardOnGripper.visible = true; // 卡片剛性鎖定於夾爪下方！
       cardOnGripper.children[0].material.color.setHex(0x16a34a);
 
-      // 提昇 ➔ 轉向車載 Slot 1 垂直下放
+      // 提昇 ➔ 轉向車載 Slot 1 垂直下放 (X = -2.2)
       await setKukaArmPose(0, -0.1, 1.1, -1.0, 500);
       cardOnGripper.visible = false;
       slot1Loaded = true;
@@ -1927,25 +1988,25 @@
 
       // 手臂收合復位至常態【彎曲向下姿態】(如參考圖，絕不直立！)
       setKukaRestPose();
-      log('[A-6] 裸卡已就位車身、手臂復位完畢，MR 車啟動行駛出發前往 Prober #01！', 'log-cyan');
+      log('[A-6] 裸卡已就位車身獨立槽、手臂復位完畢，MR 車啟動行駛出發前往 Prober #01！', 'log-cyan');
 
       // 6. MR 車出發行駛前往 Prober #01
       await lerpVector3(agvVehicle, new THREE.Vector3(4.5, 0, 12), 900);
       await lerpVector3(agvVehicle, new THREE.Vector3(4.5, 0, 1.5), 1000);
 
-      // 7. ★【開門效果還原】：TEL Prexa 白門以左側鉸鏈為軸心，流暢【向外 90 度敞開】！
-      log('[A-7] ★【開門效果】TEL Prexa #01 正面白門以左鉸鏈為軸心【流暢向外旋轉 90 度敞開】！', 'log-cyan');
-      await lerpRotationY(prober1.doorHingePivot, -Math.PI / 2, 800); // 負角度：向通道外側敞開！
+      // 7. ★【開門效果 0.5x 慢動作】：TEL Prexa 白門以左側鉸鏈為軸心，【向外 90 度敞開】(1,600ms)！
+      log('[A-7] ★【0.5x 慢動作開門】TEL Prexa #01 正面白門向外旋轉 90 度敞開 (1,600ms)！露出內部深黑空洞暗腔！', 'log-cyan');
+      await lerpRotationY(prober1.doorHingePivot, -Math.PI / 2, 1600); // 0.5x 速度，1600ms！
 
-      // 8. 電動滑台自腰胸高度 (Y = 4.0) 平移伸出門外迎接 MR 車
-      log('[A-8] 雙導軌電動滑台載著機台壞卡，自腰胸高度 (Y: 4.0) 平移伸出門外！', 'log-cyan');
-      await lerpVector3(prober1.pccStageGroup, new THREE.Vector3(-2.0, 4.0, 5.8), 800);
+      // 8. ★【光碟機式吐盤 0.5x 慢動作】：雙導軌載台自內部黑色暗室腔體，如光碟機托盤般滑出 (1,600ms)！
+      log('[A-8] ★【光碟機托盤吐出】雙導軌電動載台自深黑暗腔內部平滑吐出 (1,600ms)！', 'log-cyan');
+      await lerpVector3(prober1.pccStageGroup, new THREE.Vector3(-2.0, 4.0, 5.8), 1600); // 0.5x 速度！
 
       // 9. MR 車前進對位
       await lerpVector3(agvVehicle, new THREE.Vector3(4.5, 0, -2.8), 700);
 
       // 10. 【娃娃機 SWAP 動作】：手爪由上往下夾退壞卡 ➔ 自 Slot 1 由上往下夾進好卡
-      log('[A-9 SWAP] KUKA 手爪由上往下垂直下探夾取滑台【壞卡】，提昇放回車身【Slot 2】！', 'log-orange');
+      log('[A-9 SWAP] KUKA 手爪由上往下垂直下探夾取滑台【壞卡】，提昇放回車身【Slot 2 (獨立槽，零重疊)】！', 'log-orange');
       await setKukaArmPose(0, 0.1, 0.9, -1.0, 500);
       prober1.installedCard.visible = false;
       cardOnGripper.visible = true;
@@ -1971,11 +2032,11 @@
       // 手臂收合折疊回彎曲向下姿態
       setKukaRestPose();
 
-      // 11. 滑台縮回機身，白門旋轉閉合鎖固！
-      log('[A-11] 滑台載好卡縮回內部，白門旋轉閉合鎖固！機台轉為綠燈 AVAILABLE！', 'log-cyan');
-      await lerpVector3(prober1.pccStageGroup, new THREE.Vector3(-2.0, 4.0, 0.5), 700);
+      // 11. ★【0.5x 慢動作縮回與閉門】：滑台縮回深黑暗室內部 (1,600ms)，白門閉合鎖固 (1,400ms)！
+      log('[A-11] 滑台載好卡平滑縮回深黑內部腔體 (1,600ms)，白門旋轉閉合鎖固 (1,400ms)！機台轉綠燈！', 'log-cyan');
+      await lerpVector3(prober1.pccStageGroup, new THREE.Vector3(-2.0, 4.0, 0.5), 1600); // 0.5x 速度！
       await lerpVector3(agvVehicle, new THREE.Vector3(4.5, 0, 1.5), 600);
-      await lerpRotationY(prober1.doorHingePivot, 0, 700); // 閉門
+      await lerpRotationY(prober1.doorHingePivot, 0, 1400); // 0.5x 速度閉門！
 
       prober1.status = 'HAS_GOOD';
       syncUI();
@@ -2039,12 +2100,12 @@
     }
 
     // =========================================================================
-    // 流程 B: Prober #02 新卡裝載流程 (出卡至洞口 ➔ 空箱即回庫 ➔ 娃娃機下夾 ➔ 裝機)
+    // 流程 B: Prober #02 新卡裝載流程 (出卡至洞口 ➔ 空箱即回庫 ➔ 娃娃機下夾 ➔ 0.5x 慢速裝機)
     // =========================================================================
     async function runProber2InstallFlow() {
       if (isBusy) return;
       isBusy = true;
-      modeText.textContent = '執行中：Prober #02 新卡裝載流程 (解耦出卡 ＋ 娃娃機下夾)';
+      modeText.textContent = '執行中：Prober #02 新卡裝載流程 (0.5x速開門 ＋ 暗室吐盤 ＋ 雙卡防重疊)';
       log('========================================================', 'log-cyan');
       log('>>> 開始執行 Prober #02【空機送好卡上機作業】<<<', 'log-cyan');
       log('========================================================', 'log-cyan');
@@ -2109,13 +2170,13 @@
       await lerpVector3(agvVehicle, new THREE.Vector3(24.5, 0, 12), 1100);
       await lerpVector3(agvVehicle, new THREE.Vector3(24.5, 0, 1.5), 1000);
 
-      // 6. Prober #02 白門以左鉸鏈為軸心【向外旋轉 90 度敞開】！
-      log('[B-7] Prober #02 正面白門向外旋轉 90 度敞開！', 'log-cyan');
-      await lerpRotationY(prober2.doorHingePivot, -Math.PI / 2, 800);
+      // 6. ★【0.5x 慢動作開門】：Prober #02 白門向外旋轉 90 度敞開 (1,600ms)！
+      log('[B-7] Prober #02 正面白門向外旋轉 90 度敞開 (1,600ms)！露出內部深黑暗腔！', 'log-cyan');
+      await lerpRotationY(prober2.doorHingePivot, -Math.PI / 2, 1600); // 0.5x 速度！
 
-      // 7. 滑台伸出，KUKA 手爪由上往下裝好卡
-      log('[B-8] 滑台伸出，KUKA 手爪自 Slot 1 由上往下抓取好卡，直裝上滑台！', 'log-green');
-      await lerpVector3(prober2.pccStageGroup, new THREE.Vector3(-2.0, 4.0, 5.8), 800);
+      // 7. ★【0.5x 慢動作光碟機吐盤】：空滑台自暗腔平滑吐出 (1,600ms)！
+      log('[B-8] 光碟機式空滑台自深黑腔體平滑吐出 (1,600ms)，KUKA 手爪由上往下裝好卡！', 'log-green');
+      await lerpVector3(prober2.pccStageGroup, new THREE.Vector3(-2.0, 4.0, 5.8), 1600); // 0.5x 速度！
       await lerpVector3(agvVehicle, new THREE.Vector3(24.5, 0, -2.8), 700);
 
       await setKukaArmPose(Math.PI / 2, -0.1, 1.1, -1.0, 400);
@@ -2131,11 +2192,11 @@
 
       setKukaRestPose(); // 復位
 
-      // 8. 滑台縮回，白門閉合鎖固，Prober #02 轉綠燈 AVAILABLE！
-      log('[B-9] 滑台縮回，白門閉合鎖固！Prober #02 互鎖解除轉綠燈！', 'log-cyan');
-      await lerpVector3(prober2.pccStageGroup, new THREE.Vector3(-2.0, 4.0, 0.5), 700);
+      // 8. ★【0.5x 慢動作縮回與閉門】：滑台縮回深黑暗室 (1,600ms)，白門閉合鎖固 (1,400ms)！
+      log('[B-9] 滑台縮回深黑腔體 (1,600ms)，白門閉合鎖固 (1,400ms)！Prober #02 互鎖解除轉綠燈！', 'log-cyan');
+      await lerpVector3(prober2.pccStageGroup, new THREE.Vector3(-2.0, 4.0, 0.5), 1600); // 0.5x 速度！
       await lerpVector3(agvVehicle, new THREE.Vector3(24.5, 0, 1.5), 600);
-      await lerpRotationY(prober2.doorHingePivot, 0, 700);
+      await lerpRotationY(prober2.doorHingePivot, 0, 1400); // 0.5x 速度！
 
       prober2.status = 'HAS_GOOD';
       syncUI();
@@ -2150,9 +2211,6 @@
 
     // =========================================================================
     // 流程 C: 高速 OHT 天車自正上方天軌【純垂直下放】FOUP 到 Prexa 完全無遮蔽 Load Port
-    // 滿足使用者規範：
-    // - 天軌正對 Load Port 正上方，天車直下直上，零空中橫移！
-    // - Load Port 完全向上敞開無遮蔽，清楚呈現 FOUP 垂直座落！
     // =========================================================================
     async function runOhtLoopDelivery() {
       let target = null;
@@ -2257,7 +2315,7 @@
       if (isBusy) return;
       log('====================================================================', 'log-cyan');
       log('>>> 啟動全自動完整巡迴：P1 Swap ➔ OHT直降送片 ➔ P2 送卡 ➔ OHT送片 <<<', 'log-cyan');
-      log('====================================================================', 'log-cyan');
+      log('=========================================================', 'log-cyan');
 
       await runProber1SwapFlow();
       await sleep(500);
@@ -2274,7 +2332,7 @@
       syncUI();
       log('★ Prober #02 晶圓針測同步開跑！', 'log-green');
 
-      log('>>> TEL Prexa 雙機台全部完成真實工藝流程與晶圓測試！<<<', 'log-green');
+      log('>>> Teradyne 壓頂 & TEL Prexa 雙機台全部完成真實工藝流程與晶圓測試！<<<', 'log-green');
     }
 
     // 重置所有狀態
@@ -2327,19 +2385,19 @@
 
       syncUI();
       modeText.textContent = '3D 產線待命 (天車常態高速巡邏)';
-      log('系統已重置至初始工況：TEL Prexa 針測機 ｜ KUKA MR 車 ｜ FOUP 在庫', 'log-orange');
+      log('系統已重置至初始工況：Teradyne 壓頂 ｜ TEL Prexa ｜ KUKA MR 車 ｜ FOUP 在庫', 'log-orange');
     }
 
     window.setCameraView = function(view) {
       if (view === 'iso') {
         lerpVector3(camera, new THREE.Vector3(-6, 38, 54), 800);
-        controls.target.set(4, 5.5, 0);
+        controls.target.set(6, 6.0, 0);
       } else if (view === 'prober1') {
         lerpVector3(camera, new THREE.Vector3(6.5, 9, 8), 800);
-        controls.target.set(6.5, 4.5, -6);
+        controls.target.set(6.5, 4.5, -5);
       } else if (view === 'prober2') {
         lerpVector3(camera, new THREE.Vector3(26.5, 9, 8), 800);
-        controls.target.set(26.5, 4.5, -6);
+        controls.target.set(26.5, 4.5, -5);
       } else if (view === 'kuka') {
         lerpVector3(camera, new THREE.Vector3(-6, 8, 22), 800);
         controls.target.set(-6, 2.5, 12);
