@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>晶圓測試廠 3D 自動化物流與換卡系統 (3D Fab Simulator)</title>
+  <title>晶圓測試廠 3D 全自動物流與換卡系統 (OHT + 雙卡槽換卡AGV + 脫穿箱機構)</title>
   <style>
     :root {
       --bg: #090e17;
-      --panel-bg: rgba(18, 27, 46, 0.85);
-      --panel-border: rgba(38, 59, 94, 0.6);
+      --panel-bg: rgba(18, 27, 46, 0.88);
+      --panel-border: rgba(45, 68, 108, 0.65);
       --accent: #00d2ff;
       --accent-glow: rgba(0, 210, 255, 0.4);
       --green: #00e676;
       --orange: #ff9100;
+      --red: #ff3d00;
       --text: #f1f5f9;
       --text-muted: #94a3b8;
     }
@@ -35,7 +36,7 @@
       flex-direction: column;
     }
 
-    /* 頂部導航列 (fab24hr 風格) */
+    /* 頂部導航狀態列 */
     header {
       height: 52px;
       background: linear-gradient(90deg, #0b1424 0%, #16243d 100%);
@@ -79,7 +80,7 @@
       letter-spacing: 0.8px;
     }
 
-    .status-bar {
+    .header-status {
       display: flex;
       align-items: center;
       gap: 16px;
@@ -107,7 +108,7 @@
       box-shadow: 0 0 8px var(--green);
     }
 
-    /* 主視窗：3D WebGL 畫布與懸浮 UI 覆蓋層 */
+    /* 3D WebGL 容器 */
     #container-3d {
       flex: 1;
       position: relative;
@@ -122,7 +123,7 @@
       display: block;
     }
 
-    /* 懸浮控制面板 (左側與右側) */
+    /* 懸浮控制面板 */
     .hud-panel {
       position: absolute;
       background: var(--panel-bg);
@@ -134,19 +135,19 @@
       z-index: 10;
     }
 
-    /* 右側控制主面板 */
+    /* 右側操作控制面板 */
     #panel-controls {
       top: 16px;
       right: 16px;
-      width: 320px;
+      width: 330px;
       max-height: calc(100% - 32px);
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       overflow-y: auto;
     }
 
-    /* 左下角鏡頭與視角指示 */
+    /* 左下角鏡頭控制 */
     #panel-camera {
       bottom: 16px;
       left: 16px;
@@ -169,7 +170,6 @@
       color: var(--accent);
     }
 
-    /* 面板區塊 */
     .section-title {
       font-size: 12px;
       font-weight: 700;
@@ -184,9 +184,50 @@
       margin-bottom: 8px;
     }
 
+    /* 機台狀態監控卡片 */
+    .prober-status-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .prober-card {
+      background: rgba(9, 14, 24, 0.7);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 11px;
+    }
+
+    .prober-card.ready {
+      border-color: var(--green);
+      background: rgba(0, 230, 118, 0.08);
+    }
+
+    .prober-card.testing {
+      border-color: var(--accent);
+      background: rgba(0, 210, 255, 0.12);
+    }
+
+    .prober-card h4 {
+      font-size: 11px;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .prober-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
     .btn {
       width: 100%;
-      padding: 9px 12px;
+      padding: 8px 12px;
       border-radius: 6px;
       border: 1px solid transparent;
       font-size: 12px;
@@ -227,43 +268,54 @@
       cursor: not-allowed;
     }
 
-    /* AGV 雙卡槽即時儀表 */
+    /* 機台選擇標籤 */
+    .target-picker {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .picker-btn {
+      flex: 1;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid var(--panel-border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .picker-btn.active {
+      border-color: var(--accent);
+      background: rgba(0, 210, 255, 0.15);
+      color: var(--accent);
+    }
+
+    /* 雙卡槽監視 */
     .slot-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin: 8px 0;
+      margin: 6px 0;
     }
 
     .slot-item {
       background: rgba(9, 14, 24, 0.7);
       border: 1.5px dashed var(--panel-border);
       border-radius: 6px;
-      padding: 8px;
+      padding: 6px;
       text-align: center;
     }
+    .slot-item.active { border-style: solid; }
+    .slot-item.new.active { border-color: var(--green); background: rgba(0, 230, 118, 0.1); }
+    .slot-item.old.active { border-color: var(--orange); background: rgba(255, 145, 0, 0.1); }
 
-    .slot-item.active {
-      border-style: solid;
-    }
-    .slot-item.new.active {
-      border-color: var(--green);
-      background: rgba(0, 230, 118, 0.1);
-    }
-    .slot-item.old.active {
-      border-color: var(--orange);
-      background: rgba(255, 145, 0, 0.1);
-    }
-
-    .slot-item h4 {
-      font-size: 10px;
-      color: var(--text-muted);
-      margin-bottom: 2px;
-    }
-    .slot-item p {
-      font-size: 11px;
-      font-weight: 700;
-    }
+    .slot-item h5 { font-size: 9px; color: var(--text-muted); margin-bottom: 2px; }
+    .slot-item p { font-size: 11px; font-weight: 700; }
 
     /* SECS/GEM 日誌 */
     .log-terminal {
@@ -273,16 +325,16 @@
       padding: 8px;
       font-family: Consolas, Monaco, monospace;
       font-size: 10px;
-      height: 110px;
+      height: 115px;
       overflow-y: auto;
       color: #94a3b8;
       line-height: 1.5;
     }
-
     .log-line { margin-bottom: 2px; }
     .log-cyan { color: #38bdf8; }
     .log-green { color: #4ade80; }
     .log-orange { color: #fb923c; }
+    .log-red { color: #f87171; }
 
     /* 3D 滑鼠懸浮 HUD 標籤 */
     #hud-label {
@@ -300,7 +352,7 @@
       white-space: nowrap;
     }
 
-    /* 底部操作引導條 */
+    /* 底部引導條 */
     .footer-hints {
       position: absolute;
       bottom: 16px;
@@ -310,7 +362,7 @@
       backdrop-filter: blur(10px);
       border: 1px solid rgba(0, 210, 255, 0.25);
       border-radius: 20px;
-      padding: 6px 20px;
+      padding: 6px 18px;
       font-size: 11px;
       color: #cbd5e1;
       display: flex;
@@ -322,7 +374,7 @@
     .footer-hints span { color: var(--accent); font-weight: bold; }
   </style>
 
-  <!-- 引入 Three.js 與 OrbitControls (使用多 CDN 備援，如無網亦具自包含保護) -->
+  <!-- 引入 Three.js 與 OrbitControls -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
@@ -333,13 +385,13 @@
     <div class="brand">
       <div class="brand-icon">3D</div>
       <div class="brand-info">
-        <h1>晶圓測試廠 3D 物流與換卡系統 (Wafer &amp; Probe Card Fab)</h1>
-        <p>Three.js 3D Fab Simulation System</p>
+        <h1>晶圓測試廠 3D 全自動物流與換卡系統</h1>
+        <p>Overhead OHT Loop + Dual-Slot Probe Card AGV + Box/Unbox Station</p>
       </div>
     </div>
-    <div class="status-bar">
-      <div>目前流程：<strong id="mode-text" style="color:var(--accent)">3D 系統待命 (IDLE)</strong></div>
-      <div class="badge-status">3D CLEANROOM ONLINE</div>
+    <div class="header-status">
+      <div>系統流程狀態：<strong id="mode-text" style="color:var(--accent)">3D 產線待命 (IDLE)</strong></div>
+      <div class="badge-status">CLEANROOM AUTOMATION ONLINE</div>
     </div>
   </header>
 
@@ -347,83 +399,117 @@
   <div id="container-3d">
     <canvas id="webgl-canvas"></canvas>
 
-    <!-- 3D 懸浮物體標籤 (HUD) -->
+    <!-- 3D 懸浮標籤 HUD -->
     <div id="hud-label">3D 設備</div>
 
-    <!-- 視角切換器 -->
+    <!-- 左下角鏡頭快速切換 -->
     <div class="hud-panel" id="panel-camera">
-      <button class="btn-cam" onclick="setCameraView('iso')">等角俯視 (Isometric)</button>
-      <button class="btn-cam" onclick="setCameraView('stocker')">看倉儲 (Stocker)</button>
-      <button class="btn-cam" onclick="setCameraView('prober')">看機台 (Prober)</button>
-      <button class="btn-cam" onclick="setCameraView('agv')">追蹤 AGV 車</button>
+      <button class="btn-cam" onclick="setCameraView('iso')">等角全景 (Isometric)</button>
+      <button class="btn-cam" onclick="setCameraView('stocker')">看倉儲區 (Stockers)</button>
+      <button class="btn-cam" onclick="setCameraView('probers')">看針測機 (Probers)</button>
+      <button class="btn-cam" onclick="setCameraView('oht')">追蹤 OHT 天車</button>
+      <button class="btn-cam" onclick="setCameraView('agv')">追蹤 換卡 AGV</button>
     </div>
 
     <!-- 底部操作提示 -->
     <div class="footer-hints">
-      <div>🖱️ <span>滑鼠左鍵拖曳</span> 旋轉 3D 視角</div>
-      <div>🖱️ <span>滑鼠右鍵拖曳</span> 平移畫面</div>
-      <div>⚙️ <span>滑鼠滾輪</span> 縮放視野</div>
-      <div>👆 <span>直接點擊 3D 模型</span> 觸發機台動作</div>
+      <div>🖱️ <span>左鍵拖曳</span> 360° 旋轉視角</div>
+      <div>🖱️ <span>右鍵拖曳</span> 平移畫面</div>
+      <div>⚙️ <span>滾輪</span> 縮放視野</div>
+      <div>👆 <span>點選 3D 設備</span> 直接觸發搬運與換卡</div>
     </div>
 
-    <!-- 右側控制面板 -->
+    <!-- 右側操作控制面板 -->
     <div class="hud-panel" id="panel-controls">
-      <!-- 總流程控制 -->
+      <!-- 兩台 Prober 狀態即時卡片 -->
       <div>
         <div class="section-title">
-          <span>全自動巡迴</span>
+          <span>Prober 機台實時狀態 (Interlock)</span>
+          <span style="font-size:9px; color:#38bdf8;">互鎖監控</span>
+        </div>
+        <div class="prober-status-grid">
+          <div class="prober-card" id="card-p1">
+            <h4>
+              <span>Prober #01</span>
+              <span class="prober-indicator" id="ind-p1" style="background:#ff3d00;"></span>
+            </h4>
+            <div style="color:var(--text-muted)">卡槽：<strong id="p1-card-status" style="color:#ff9100;">舊卡 (需更換)</strong></div>
+            <div style="color:var(--text-muted)">晶圓：<strong id="p1-foup-status">無 FOUP (等待新卡)</strong></div>
+          </div>
+          <div class="prober-card" id="card-p2">
+            <h4>
+              <span>Prober #02</span>
+              <span class="prober-indicator" id="ind-p2" style="background:#ff3d00;"></span>
+            </h4>
+            <div style="color:var(--text-muted)">卡槽：<strong id="p2-card-status" style="color:#94a3b8;">無卡 (待安裝)</strong></div>
+            <div style="color:var(--text-muted)">晶圓：<strong id="p2-foup-status">無 FOUP (等待新卡)</strong></div>
+          </div>
+        </div>
+        <div style="font-size:10px; color:#94a3b8; line-height:1.4;">
+          ⚠️ <strong>生產互鎖 (Interlock)：</strong>只有換好探針卡且測試頭壓合的機台，OHT 才會將 FOUP 吊放進料並亮綠燈測試！
+        </div>
+      </div>
+
+      <!-- 全自動展示與重置 -->
+      <div>
+        <div class="section-title">
+          <span>全自動模式 (Auto Loop)</span>
           <span style="font-size:9px; background:rgba(0,210,255,0.15); color:var(--accent); padding:2px 4px; border-radius:3px;">AUTO</span>
         </div>
-        <button class="btn btn-primary" id="btn-auto">
-          ▶ 啟動 3D 全流程自動搬運換卡
+        <button class="btn btn-primary" id="btn-auto-all">
+          ▶ 啟動 Prober #1 &amp; #2 完整換卡送片循環
         </button>
-        <button class="btn btn-outline" id="btn-reset">
-          ↺ 重置所有 3D 模型位置
+        <button class="btn btn-outline" id="btn-reset-all">
+          ↺ 重置所有 3D 模型與狀態
         </button>
       </div>
 
-      <!-- AGV 雙卡槽狀態監控 -->
+      <!-- 指定機台派工手動控制 -->
       <div>
         <div class="section-title">
-          <span>AGV 雙卡槽 (Dual Slots)</span>
-          <span style="font-size:9px; color:#38bdf8;">實體車載</span>
+          <span>指定派工與分段動作 (Manual Flow)</span>
+          <span style="font-size:9px; color:var(--text-muted);">SELECT</span>
+        </div>
+        <div class="target-picker">
+          <div class="picker-btn active" id="pick-p1" onclick="setTargetProber(1)">派工至 Prober #01</div>
+          <div class="picker-btn" id="pick-p2" onclick="setTargetProber(2)">派工至 Prober #02</div>
+        </div>
+
+        <button class="btn btn-outline" id="btn-step-unbox">1. PC 卡庫取箱 ➔ 脫箱移至出口載台</button>
+        <button class="btn btn-outline" id="btn-step-agv-pick">2. AGV 車載夾爪夾取裸卡上車 (Slot 1)</button>
+        <button class="btn btn-outline" id="btn-step-agv-swap">3. AGV 駛向機台 ➔ 車載手臂換卡</button>
+        <button class="btn btn-outline" id="btn-step-oht-foup">4. 機台轉綠燈 ➔ OHT 環狀天車吊送 FOUP</button>
+        <button class="btn btn-outline" id="btn-step-agv-return">5. AGV 載舊卡返航 ➔ 穿箱回存 PC 卡庫</button>
+      </div>
+
+      <!-- AGV 車載雙卡槽監視 -->
+      <div>
+        <div class="section-title">
+          <span>AGV 車載雙卡槽即時負載</span>
+          <span style="font-size:9px; color:#38bdf8;">車載手臂</span>
         </div>
         <div class="slot-grid">
-          <div class="slot-item new active" id="slot-1-ui">
-            <h4>SLOT 1 (新卡槽)</h4>
-            <p id="slot-1-txt" style="color:var(--green)">PC-NEW-88</p>
+          <div class="slot-item new" id="slot-1-ui">
+            <h5>SLOT 1 (新卡載位)</h5>
+            <p id="slot-1-txt" style="color:var(--text-muted);">(空 EMPTY)</p>
           </div>
           <div class="slot-item old" id="slot-2-ui">
-            <h4>SLOT 2 (舊卡接收)</h4>
-            <p id="slot-2-txt" style="color:var(--text-muted)">(空 EMPTY)</p>
+            <h5>SLOT 2 (舊卡接收位)</h5>
+            <p id="slot-2-txt" style="color:var(--text-muted);">(空 EMPTY)</p>
           </div>
         </div>
       </div>
 
-      <!-- 分段動作觸發按鈕 -->
+      <!-- SECS/GEM & AGVS 日誌 -->
       <div>
         <div class="section-title">
-          <span>單元動作操作</span>
-          <span style="font-size:9px; color:var(--text-muted);">MANUAL</span>
-        </div>
-        <button class="btn btn-outline" id="btn-foup-out">1. 3D FOUP 出庫至 LoadPort</button>
-        <button class="btn btn-outline" id="btn-agv-go">2. 雙卡槽 AGV 出發前往機台</button>
-        <button class="btn btn-outline" id="btn-swap-old">3. 機台掀蓋，舊卡卸入 Slot 2</button>
-        <button class="btn btn-outline" id="btn-swap-new">4. Slot 1 新卡裝入機台對位</button>
-        <button class="btn btn-outline" id="btn-agv-back">5. AGV 載運舊卡返航回庫</button>
-        <button class="btn btn-outline" id="btn-foup-in">6. FOUP 自動存入 Slot 04</button>
-      </div>
-
-      <!-- SECS/GEM 通訊日誌 -->
-      <div>
-        <div class="section-title">
-          <span>SECS/GEM &amp; AGVS 日誌</span>
-          <span style="font-size:9px; color:var(--green)">ONLINE</span>
+          <span>SECS/GEM &amp; AMHS 通訊日誌</span>
+          <span style="font-size:9px; color:var(--green)">CONNECTED</span>
         </div>
         <div class="log-terminal" id="log-box">
-          <div class="log-line log-cyan">[3D FAB] WebGL / Three.js 無塵室環境構建完畢</div>
-          <div class="log-line">[SYSTEM] 雙卡槽 AGV 與 FOUP Stocker 模型載入成功</div>
-          <div class="log-line">[TIPS] 點擊 3D 模型或按鈕即可開始動態展示</div>
+          <div class="log-line log-cyan">[INIT] 3D 無塵室產線連線完成 (SECS E84/E87 Ready)</div>
+          <div class="log-line">[AMHS] 空中 OHT 環狀軌道與地面 AGV 調度器就緒</div>
+          <div class="log-line">[STOCKER] PC 探針卡立體箱庫 5 格儲位裝載完成</div>
         </div>
       </div>
     </div>
@@ -431,392 +517,519 @@
 
   <script>
     // =========================================================================
-    // 1. 初始化 Three.js 3D 渲染器、相機與燈光 (fab24hr 風格)
+    // 1. 初始化 3D 渲染器、相機與燈光 (Three.js WebGL)
     // =========================================================================
     const container = document.getElementById('container-3d');
     const canvas = document.getElementById('webgl-canvas');
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a0f1d);
-    scene.fog = new THREE.FogExp2(0x0a0f1d, 0.015);
+    scene.background = new THREE.Color(0x090e17);
+    scene.fog = new THREE.FogExp2(0x090e17, 0.012);
 
-    // 相機 (透視視角)
     const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-    camera.position.set(0, 32, 42);
+    camera.position.set(-8, 38, 48);
 
-    // 渲染器 (支援柔和陰影)
-    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    // 軌道控制器
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2.05; // 限制不能看到地板下方
-    controls.minDistance = 10;
-    controls.maxDistance = 80;
-    controls.target.set(0, 4, 0);
+    controls.maxPolarAngle = Math.PI / 2.05;
+    controls.minDistance = 15;
+    controls.maxDistance = 110;
+    controls.target.set(0, 6, 0);
 
-    // 燈光設置 (高科技無塵室冷色調與高光)
-    const ambientLight = new THREE.AmbientLight(0x223554, 1.8);
+    // 燈光照明
+    const ambientLight = new THREE.AmbientLight(0x223554, 2.0);
     scene.add(ambientLight);
 
-    const mainLight = new THREE.DirectionalLight(0xd9f2ff, 1.6);
-    mainLight.position.set(20, 40, 20);
-    mainLight.castShadow = true;
-    mainLight.shadow.mapSize.width = 2048;
-    mainLight.shadow.mapSize.height = 2048;
-    mainLight.shadow.camera.near = 0.5;
-    mainLight.shadow.camera.far = 100;
-    mainLight.shadow.camera.left = -30;
-    mainLight.shadow.camera.right = 30;
-    mainLight.shadow.camera.top = 30;
-    mainLight.shadow.camera.bottom = -30;
-    scene.add(mainLight);
+    const dirLight = new THREE.DirectionalLight(0xe0f2fe, 1.8);
+    dirLight.position.set(25, 55, 30);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.camera.near = 1;
+    dirLight.shadow.camera.far = 140;
+    dirLight.shadow.camera.left = -40;
+    dirLight.shadow.camera.right = 40;
+    dirLight.shadow.camera.top = 40;
+    dirLight.shadow.camera.bottom = -40;
+    scene.add(dirLight);
 
-    const bluePoint = new THREE.PointLight(0x00d2ff, 2.5, 40);
-    bluePoint.position.set(-15, 12, 0);
-    scene.add(bluePoint);
+    const cyanSpot = new THREE.PointLight(0x00d2ff, 2.5, 50);
+    cyanSpot.position.set(-20, 16, 0);
+    scene.add(cyanSpot);
 
-    const greenPoint = new THREE.PointLight(0x00e676, 2.2, 40);
-    greenPoint.position.set(15, 12, 0);
-    scene.add(greenPoint);
+    const greenSpot = new THREE.PointLight(0x00e676, 2.5, 50);
+    greenSpot.position.set(20, 16, 0);
+    scene.add(greenSpot);
 
     // =========================================================================
-    // 2. 構建 3D 無塵室地板與環境
+    // 2. 地板與無塵室環境
     // =========================================================================
-    // 無塵室地磚 (高架地板網格)
-    const floorGeo = new THREE.PlaneGeometry(80, 80);
-    const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x0c1322,
-      roughness: 0.8,
-      metalness: 0.2
-    });
+    const floorGeo = new THREE.PlaneGeometry(100, 80);
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x0b1322, roughness: 0.8, metalness: 0.2 });
     const floor = new THREE.Mesh(floorGeo, floorMat);
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     scene.add(floor);
 
-    // 網格地面線
-    const gridHelper = new THREE.GridHelper(80, 40, 0x1e293b, 0x131d2e);
-    gridHelper.position.y = 0.01;
-    scene.add(gridHelper);
-
-    // 地面黃色 AGV 導引路線
-    const trackGeo = new THREE.PlaneGeometry(1.2, 28);
-    const trackMat = new THREE.MeshBasicMaterial({ color: 0x00d2ff, transparent: true, opacity: 0.4 });
-    const track1 = new THREE.Mesh(new THREE.PlaneGeometry(28, 1.2), trackMat);
-    track1.rotation.x = -Math.PI / 2;
-    track1.position.set(0, 0.02, 10);
-    scene.add(track1);
-
-    const track2 = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 16), trackMat);
-    track2.rotation.x = -Math.PI / 2;
-    track2.position.set(14, 0.02, 2);
-    scene.add(track2);
+    const grid = new THREE.GridHelper(100, 50, 0x1e293b, 0x131d2e);
+    grid.position.y = 0.01;
+    scene.add(grid);
 
     // =========================================================================
-    // 3. 構建 3D 設備模型：FOUP STOCKER (晶圓自動立體倉儲)
+    // 3. 空中 OHT 天車環狀軌道系統 (Loop Overhead Track & Pylons)
     // =========================================================================
-    const stockerGroup = new THREE.Group();
-    stockerGroup.position.set(-16, 0, -4);
-    stockerGroup.userData = { name: "FOUP 自動倉儲 (Stocker)" };
-    scene.add(stockerGroup);
+    // 軌道高度 Y = 20
+    const ohtRailHeight = 20;
 
-    // 倉儲主體框架 (鋼構與透明防塵罩)
-    const stockerFrameGeo = new THREE.BoxGeometry(10, 16, 12);
-    const stockerFrameMat = new THREE.MeshStandardMaterial({
-      color: 0x111c2e,
-      roughness: 0.4,
-      metalness: 0.7
-    });
-    const stockerFrame = new THREE.Mesh(stockerFrameGeo, stockerFrameMat);
-    stockerFrame.position.y = 8;
-    stockerFrame.castShadow = true;
-    stockerFrame.receiveShadow = true;
-    stockerGroup.add(stockerFrame);
-
-    // 倉儲頂部裝飾條
-    const stockerTopGeo = new THREE.BoxGeometry(10.2, 1.2, 12.2);
-    const stockerTopMat = new THREE.MeshStandardMaterial({ color: 0x0091ea, metalness: 0.8 });
-    const stockerTop = new THREE.Mesh(stockerTopGeo, stockerTopMat);
-    stockerTop.position.y = 15.6;
-    stockerGroup.add(stockerTop);
-
-    // 4 個貨架格位 (Slot 1~4)
-    const slotPositions = [
-      new THREE.Vector3(-2.2, 11, -2.5), // Slot 1
-      new THREE.Vector3(2.2, 11, -2.5),  // Slot 2
-      new THREE.Vector3(-2.2, 6, -2.5),  // Slot 3
-      new THREE.Vector3(2.2, 6, -2.5)    // Slot 4
+    // 閉環路徑點：從 FOUP Stocker 上方 (-24, 20, -12) -> (24, 20, -12) -> (24, 20, 6) -> (-24, 20, 6) -> 閉合
+    const loopPoints = [
+      new THREE.Vector3(-24, ohtRailHeight, -12),
+      new THREE.Vector3(24, ohtRailHeight, -12),
+      new THREE.Vector3(24, ohtRailHeight, 6),
+      new THREE.Vector3(-24, ohtRailHeight, 6)
     ];
 
-    slotPositions.forEach((pos, idx) => {
-      const shelfGeo = new THREE.BoxGeometry(3.6, 0.3, 3.6);
-      const shelfMat = new THREE.MeshStandardMaterial({ color: 0x223554, metalness: 0.6 });
-      const shelf = new THREE.Mesh(shelfGeo, shelfMat);
-      shelf.position.copy(pos);
-      shelf.position.y -= 0.5;
-      stockerGroup.add(shelf);
+    const ohtCurve = new THREE.CurvePath();
+    const c1 = new THREE.LineCurve3(loopPoints[0], loopPoints[1]);
+    const c2 = new THREE.LineCurve3(loopPoints[1], loopPoints[2]);
+    const c3 = new THREE.LineCurve3(loopPoints[2], loopPoints[3]);
+    const c4 = new THREE.LineCurve3(loopPoints[3], loopPoints[0]);
+    ohtCurve.add(c1); ohtCurve.add(c2); ohtCurve.add(c3); ohtCurve.add(c4);
+
+    // 建立立體金屬軌道管
+    const railGeo = new THREE.TubeGeometry(ohtCurve, 120, 0.4, 8, true);
+    const railMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.9, roughness: 0.2 });
+    const ohtRailMesh = new THREE.Mesh(railGeo, railMat);
+    scene.add(ohtRailMesh);
+
+    // 軌道支撐鋼柱 (Pylons)
+    [-24, 0, 24].forEach(px => {
+      [-12, 6].forEach(pz => {
+        const pylonGeo = new THREE.CylinderGeometry(0.3, 0.3, ohtRailHeight, 16);
+        const pylonMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8 });
+        const pylon = new THREE.Mesh(pylonGeo, pylonMat);
+        pylon.position.set(px, ohtRailHeight / 2, pz);
+        scene.add(pylon);
+      });
     });
 
-    // 升降機直立軌道 (Mast)
-    const mastGeo = new THREE.BoxGeometry(0.6, 14, 0.6);
-    const mastMat = new THREE.MeshStandardMaterial({ color: 0x00d2ff, metalness: 0.9, roughness: 0.2 });
-    const mast = new THREE.Mesh(mastGeo, mastMat);
-    mast.position.set(0, 8, 0);
-    stockerGroup.add(mast);
-
-    // 升降機械手臂 (Stacker Crane Carriage & Fork)
-    const craneGroup = new THREE.Group();
-    craneGroup.position.set(0, 11, 0);
-    stockerGroup.add(craneGroup);
-
-    const craneBaseGeo = new THREE.BoxGeometry(2.5, 0.6, 2.5);
-    const craneBaseMat = new THREE.MeshStandardMaterial({ color: 0x00d2ff, roughness: 0.3 });
-    const craneBase = new THREE.Mesh(craneBaseGeo, craneBaseMat);
-    craneGroup.add(craneBase);
-
-    // 夾爪指叉 (Fork)
-    const forkGeo = new THREE.BoxGeometry(2.2, 0.2, 2.0);
-    const forkMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.9 });
-    const fork = new THREE.Mesh(forkGeo, forkMat);
-    fork.position.set(0, 0.4, 0.6);
-    craneGroup.add(fork);
-
-    // Stocker 出入料轉載台 (I/O Port)
-    const ioPortGeo = new THREE.BoxGeometry(3.8, 1.2, 3.8);
-    const ioPortMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.8 });
-    const ioPort = new THREE.Mesh(ioPortGeo, ioPortMat);
-    ioPort.position.set(0, 1.5, 6.2);
-    stockerGroup.add(ioPort);
-
     // =========================================================================
-    // 4. 構建 3D FOUP (12 吋晶圓盒模型)
+    // 4. OHT 天車模型 (OHT Vehicle & Vertical Hoist Gripper)
     // =========================================================================
-    const foupGroup = new THREE.Group();
-    foupGroup.position.set(-16 + slotPositions[0].x, slotPositions[0].y + 0.6, -4 + slotPositions[0].z);
-    foupGroup.userData = { name: "12吋 FOUP 晶圓盒 (Lot: W-9921)" };
-    scene.add(foupGroup);
+    const ohtVehicle = new THREE.Group();
+    ohtVehicle.position.set(-24, ohtRailHeight, -12);
+    ohtVehicle.userData = { name: "OHT 空中天車 (Overhead Hoist Transport)" };
+    scene.add(ohtVehicle);
 
-    // FOUP 本體 (倒角立方盒身)
-    const foupBodyGeo = new THREE.BoxGeometry(2.2, 1.8, 2.2);
-    const foupBodyMat = new THREE.MeshStandardMaterial({
-      color: 0x1d4ed8,
-      roughness: 0.2,
-      metalness: 0.8,
-      clearcoat: 0.6
-    });
-    const foupBody = new THREE.Mesh(foupBodyGeo, foupBodyMat);
-    foupBody.castShadow = true;
-    foupGroup.add(foupBody);
+    // 天車主體滑台
+    const ohtBodyGeo = new THREE.BoxGeometry(4.2, 1.8, 3.2);
+    const ohtBodyMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.8, roughness: 0.3 });
+    const ohtBody = new THREE.Mesh(ohtBodyGeo, ohtBodyMat);
+    ohtBody.castShadow = true;
+    ohtVehicle.add(ohtBody);
 
-    // 前氣密門 (黑色面板)
-    const foupDoorGeo = new THREE.BoxGeometry(1.8, 1.4, 0.1);
-    const foupDoorMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5 });
-    const foupDoor = new THREE.Mesh(foupDoorGeo, foupDoorMat);
-    foupDoor.position.set(0, 0, 1.12);
-    foupGroup.add(foupDoor);
-
-    // 晶圓透明窗裝飾線
-    for (let i = 0; i < 4; i++) {
-      const wLine = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.4, 0.08),
-        new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
-      );
-      wLine.position.set(0, -0.4 + i * 0.25, 1.18);
-      foupGroup.add(wLine);
+    // 滾輪與導向機構
+    for (let i = -1; i <= 1; i += 2) {
+      const w = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.4, 16), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
+      w.rotation.x = Math.PI / 2;
+      w.position.set(i * 1.6, 0.8, 0);
+      ohtVehicle.add(w);
     }
 
-    // 頂部抓取法蘭 (Robotic Flange)
-    const flangeGeo = new THREE.BoxGeometry(0.8, 0.3, 0.8);
-    const flangeMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9 });
-    const flange = new THREE.Mesh(flangeGeo, flangeMat);
-    flange.position.set(0, 1.05, 0);
-    foupGroup.add(flange);
+    // 垂直升降鋼索吊爪 (Hoist Gripper Unit)
+    const ohtHoist = new THREE.Group();
+    ohtHoist.position.set(0, -1.2, 0);
+    ohtVehicle.add(ohtHoist);
+
+    // 吊爪承托底座
+    const hoistBaseGeo = new THREE.BoxGeometry(2.8, 0.5, 2.8);
+    const hoistBaseMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.9 });
+    const hoistBase = new THREE.Mesh(hoistBaseGeo, hoistBaseMat);
+    ohtHoist.add(hoistBase);
+
+    // 4 條懸吊鋼索 (動態拉長縮短)
+    const cableMat = new THREE.MeshBasicMaterial({ color: 0xe2e8f0 });
+    const cable1 = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1, 8), cableMat);
+    cable1.position.set(-1.1, 0.5, -1.1);
+    ohtHoist.add(cable1);
+    const cable2 = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1, 8), cableMat);
+    cable2.position.set(1.1, 0.5, -1.1);
+    ohtHoist.add(cable2);
+    const cable3 = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1, 8), cableMat);
+    cable3.position.set(-1.1, 0.5, 1.1);
+    ohtHoist.add(cable3);
+    const cable4 = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1, 8), cableMat);
+    cable4.position.set(1.1, 0.5, 1.1);
+    ohtHoist.add(cable4);
 
     // =========================================================================
-    // 5. 構建 3D WAFER PROBER (晶圓針測測試機)
+    // 5. 12吋 FOUP 晶圓盒模型
     // =========================================================================
-    const proberGroup = new THREE.Group();
-    proberGroup.position.set(16, 0, -4);
-    proberGroup.userData = { name: "晶圓針測機 (Wafer Prober #01)" };
-    scene.add(proberGroup);
+    function createFoupMesh(lotId) {
+      const g = new THREE.Group();
+      // 外盒
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(2.4, 2.0, 2.4),
+        new THREE.MeshStandardMaterial({ color: 0x1d4ed8, metalness: 0.8, roughness: 0.2 })
+      );
+      body.castShadow = true;
+      g.add(body);
+      // 前氣密門
+      const door = new THREE.Mesh(
+        new THREE.BoxGeometry(2.0, 1.6, 0.1),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5 })
+      );
+      door.position.set(0, 0, 1.22);
+      g.add(door);
+      // 頂部抓取法蘭 (Robotic Flange)
+      const flange = new THREE.Mesh(
+        new THREE.BoxGeometry(0.8, 0.3, 0.8),
+        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9 })
+      );
+      flange.position.set(0, 1.15, 0);
+      g.add(flange);
+      g.userData = { name: `12吋 FOUP (${lotId})` };
+      return g;
+    }
 
-    // 機身主體
-    const proberBodyGeo = new THREE.BoxGeometry(12, 10, 12);
-    const proberBodyMat = new THREE.MeshStandardMaterial({
-      color: 0x0f172a,
-      roughness: 0.5,
-      metalness: 0.5
+    // 主動展示的 FOUP
+    const activeFoup = createFoupMesh("LOT: W-9921");
+    activeFoup.position.set(-24, 15, -12); // 初始停在 FOUP Stocker 上方出料口
+    scene.add(activeFoup);
+
+    // =========================================================================
+    // 6. FOUP STOCKER (晶圓自動立體倉儲)
+    // =========================================================================
+    const foupStocker = new THREE.Group();
+    foupStocker.position.set(-24, 0, -12);
+    foupStocker.userData = { name: "FOUP 自動立體倉儲 (FOUP Stocker)" };
+    scene.add(foupStocker);
+
+    const fsFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(10, 16, 8),
+      new THREE.MeshStandardMaterial({ color: 0x111c2e, metalness: 0.6, roughness: 0.4 })
+    );
+    fsFrame.position.y = 8;
+    fsFrame.castShadow = true;
+    foupStocker.add(fsFrame);
+
+    // 倉儲門面板與 OHT 頂部載台
+    const fsTopStage = new THREE.Mesh(
+      new THREE.BoxGeometry(4.2, 0.8, 4.2),
+      new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.8 })
+    );
+    fsTopStage.position.set(0, 14.2, 0);
+    foupStocker.add(fsTopStage);
+
+    // =========================================================================
+    // 7. PC STOCKER (探針卡立體箱庫 - 5 個裝箱儲位) + 脫穿箱機台 (Box Tool)
+    // =========================================================================
+    const pcStockerGroup = new THREE.Group();
+    pcStockerGroup.position.set(-24, 0, 8);
+    pcStockerGroup.userData = { name: "探針卡立體箱庫 (PC Stocker, 5 Slots)" };
+    scene.add(pcStockerGroup);
+
+    // PC Stocker 箱庫主體框架
+    const pcFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(12, 14, 8),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.3 })
+    );
+    pcFrame.position.set(0, 7, 0);
+    pcFrame.castShadow = true;
+    pcStockerGroup.add(pcFrame);
+
+    // 探針卡專用保護箱模型生成函式
+    function createProbeCardBoxMesh(boxLabel) {
+      const g = new THREE.Group();
+      // 外箱厚實手提箱外觀
+      const box = new THREE.Mesh(
+        new THREE.BoxGeometry(3.6, 1.2, 3.6),
+        new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.5, roughness: 0.5 })
+      );
+      box.castShadow = true;
+      g.add(box);
+      // 提把與金屬鎖扣
+      const latch = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.3, 0.2), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9 }));
+      latch.position.set(0, 0, 1.85);
+      g.add(latch);
+      g.userData = { name: `探針卡保護箱 (${boxLabel})` };
+      return g;
+    }
+
+    // 5 個卡箱儲位 (5 Slots 視覺陳列)
+    const pcSlotPositions = [
+      new THREE.Vector3(-3.2, 10.5, 1.2), // Slot 1
+      new THREE.Vector3(3.2, 10.5, 1.2),  // Slot 2
+      new THREE.Vector3(-3.2, 7.0, 1.2),  // Slot 3
+      new THREE.Vector3(3.2, 7.0, 1.2),   // Slot 4
+      new THREE.Vector3(0, 3.5, 1.2)      // Slot 5 (脫箱預備工位)
+    ];
+
+    pcSlotPositions.forEach((pos, idx) => {
+      // 隔間格板
+      const slotRack = new THREE.Mesh(
+        new THREE.BoxGeometry(4.2, 0.2, 4.0),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9 })
+      );
+      slotRack.position.set(pos.x, pos.y - 0.7, pos.z);
+      pcStockerGroup.add(slotRack);
+
+      // 放上卡箱
+      const cardBox = createProbeCardBoxMesh(`BOX-#0${idx + 1}`);
+      cardBox.position.copy(pos);
+      pcStockerGroup.add(cardBox);
     });
-    const proberBody = new THREE.Mesh(proberBodyGeo, proberBodyMat);
-    proberBody.position.y = 5;
-    proberBody.castShadow = true;
-    proberGroup.add(proberBody);
 
-    // 機台前窗觀察孔
-    const winGeo = new THREE.BoxGeometry(8, 3.5, 0.2);
-    const winMat = new THREE.MeshStandardMaterial({
-      color: 0x00e676,
-      transparent: true,
-      opacity: 0.25,
-      roughness: 0.1
-    });
-    const win = new THREE.Mesh(winGeo, winMat);
-    win.position.set(0, 6, 6.05);
-    proberGroup.add(win);
+    // -------------------------------------------------------------
+    // 脫穿箱工作站 (Box Opener / Decapper Tool)
+    // -------------------------------------------------------------
+    const boxToolGroup = new THREE.Group();
+    boxToolGroup.position.set(-14, 0, 8); // 位於 PC Stocker 前方出料接口
+    boxToolGroup.userData = { name: "探針卡脫穿箱工作站 (Box/Unbox Tool)" };
+    scene.add(boxToolGroup);
 
-    // 晶圓承載吸盤 (Chuck Area)
-    const chuckGeo = new THREE.CylinderGeometry(2.5, 2.5, 0.4, 32);
-    const chuckMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8 });
-    const chuck = new THREE.Mesh(chuckGeo, chuckMat);
-    chuck.position.set(0, 5.2, 0);
-    proberGroup.add(chuck);
+    const btBase = new THREE.Mesh(
+      new THREE.BoxGeometry(6, 4.5, 6),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.7, roughness: 0.3 })
+    );
+    btBase.position.y = 2.25;
+    btBase.castShadow = true;
+    boxToolGroup.add(btBase);
 
-    // 正在測試的 12 吋金黃/矽藍晶圓 (Wafer on Chuck)
-    const waferGeo = new THREE.CylinderGeometry(2.2, 2.2, 0.08, 32);
-    const waferMat = new THREE.MeshStandardMaterial({
-      color: 0x38bdf8,
-      metalness: 0.9,
-      roughness: 0.1
-    });
-    const waferMesh = new THREE.Mesh(waferGeo, waferMat);
-    waferMesh.position.set(0, 5.45, 0);
-    proberGroup.add(waferMesh);
+    // 裸卡出口傳送陣載台 (Card Exit Conveyor Stage)
+    const cardStage = new THREE.Mesh(
+      new THREE.BoxGeometry(3.6, 0.4, 3.6),
+      new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.8 })
+    );
+    cardStage.position.set(0, 4.6, 0);
+    boxToolGroup.add(cardStage);
 
-    // 針測機三色塔燈 (Tower Light)
-    const towerMast = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 3, 16), new THREE.MeshStandardMaterial({ color: 0x64748b }));
-    towerMast.position.set(5, 11.5, 5);
-    proberGroup.add(towerMast);
+    // 脫箱機具開蓋頂部
+    const btLid = new THREE.Mesh(
+      new THREE.BoxGeometry(4.0, 0.4, 4.0),
+      new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.8 })
+    );
+    btLid.position.set(0, 5.2, 0);
+    boxToolGroup.add(btLid);
 
-    const greenLightMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.6, 16), new THREE.MeshBasicMaterial({ color: 0x00e676 }));
-    greenLightMesh.position.set(5, 12.8, 5);
-    proberGroup.add(greenLightMesh);
-
-    // 可掀蓋的探針卡頭部艙蓋 (Hinged Head Cover)
-    const proberHeadGroup = new THREE.Group();
-    proberHeadGroup.position.set(0, 8.5, 0); // 樞紐位置
-    proberGroup.add(proberHeadGroup);
-
-    const headGeo = new THREE.BoxGeometry(6, 1.2, 6);
-    const headMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7 });
-    const headMesh = new THREE.Mesh(headGeo, headMat);
-    headMesh.position.y = 0.6;
-    proberHeadGroup.add(headMesh);
-
-    // 機台內部裝載的舊探針卡 (OLD PROBE CARD)
-    function createProbeCardMesh(colorHex, label) {
-      const cardG = new THREE.Group();
+    // =========================================================================
+    // 8. 裸探針卡模型 (Bare Probe Card)
+    // =========================================================================
+    function createBareProbeCardMesh(colorHex, label) {
+      const g = new THREE.Group();
       // PCB 圓盤
       const pcb = new THREE.Mesh(
         new THREE.CylinderGeometry(1.6, 1.6, 0.15, 32),
-        new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.3, metalness: 0.4 })
+        new THREE.MeshStandardMaterial({ color: colorHex, metalness: 0.5, roughness: 0.3 })
       );
-      cardG.add(pcb);
+      pcb.castShadow = true;
+      g.add(pcb);
 
-      // 金屬加強環
+      // 金屬加強外環 (Stiffener)
       const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(1.2, 0.08, 16, 32),
+        new THREE.TorusGeometry(1.25, 0.08, 16, 32),
         new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.9 })
       );
       ring.rotation.x = Math.PI / 2;
-      cardG.add(ring);
+      g.add(ring);
 
-      // 中心針尖陣列 (Needle Array)
+      // 中心微針針束陣列 (Probe Needle Array)
       const needles = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.4, 0.4, 0.18, 16),
+        new THREE.CylinderGeometry(0.45, 0.45, 0.2, 16),
         new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 1.0 })
       );
-      needles.position.y = -0.06;
-      cardG.add(needles);
+      needles.position.y = -0.05;
+      g.add(needles);
 
-      return cardG;
+      g.userData = { name: `裸探針卡 (${label})` };
+      return g;
     }
 
-    const cardInProber = createProbeCardMesh(0xe65100, "OLD"); // 橘色舊卡
-    cardInProber.position.set(0, 0, 0);
-    proberHeadGroup.add(cardInProber);
+    // 待出庫之新探針卡 (初始放在脫箱機出口載台)
+    const bareCardNew = createBareProbeCardMesh(0x16a34a, "PC-NEW-88");
+    bareCardNew.position.set(-14, 4.8, 8);
+    scene.add(bareCardNew);
 
     // =========================================================================
-    // 6. 構建 3D 雙工位探針卡 AGV 搬運車 (DUAL-SLOT AGV)
+    // 9. 兩組晶圓針測機 (WAFER PROBER #01 & PROBER #02)
     // =========================================================================
-    const agvGroup = new THREE.Group();
-    agvGroup.position.set(-14, 0, 10);
-    agvGroup.userData = { name: "雙工位探針卡 AGV 台車 (Slot 1: 新卡 / Slot 2: 空)" };
-    scene.add(agvGroup);
+    function createProberMachine(proberId, posX, posZ) {
+      const g = new THREE.Group();
+      g.position.set(posX, 0, posZ);
+      g.userData = { name: `晶圓針測機 (${proberId})`, id: proberId };
 
-    // AGV 金屬底盤
-    const chassisGeo = new THREE.BoxGeometry(6.2, 1.4, 4.4);
-    const chassisMat = new THREE.MeshStandardMaterial({
-      color: 0x1e293b,
-      metalness: 0.7,
-      roughness: 0.4
-    });
-    const chassis = new THREE.Mesh(chassisGeo, chassisMat);
-    chassis.position.y = 1.0;
-    chassis.castShadow = true;
-    agvGroup.add(chassis);
+      // 機身
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(10, 10, 10),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.6, roughness: 0.4 })
+      );
+      body.position.y = 5;
+      body.castShadow = true;
+      g.add(body);
 
-    // 4 只全向輪 (Mecanum Wheels)
-    const wheelGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.5, 24);
-    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.9 });
-    const wheelOffsets = [
-      [-2.4, 0.6, 2.2],
-      [2.4, 0.6, 2.2],
-      [-2.4, 0.6, -2.2],
-      [2.4, 0.6, -2.2]
-    ];
-    wheelOffsets.forEach(([wx, wy, wz]) => {
-      const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+      // 前窗與觀察透明孔
+      const win = new THREE.Mesh(
+        new THREE.BoxGeometry(6, 3, 0.2),
+        new THREE.MeshStandardMaterial({ color: 0x00e676, transparent: true, opacity: 0.2 })
+      );
+      win.position.set(0, 6, 5.05);
+      g.add(win);
+
+      // 晶圓承載吸盤 (Chuck Area)
+      const chuck = new THREE.Mesh(
+        new THREE.CylinderGeometry(2.4, 2.4, 0.3, 32),
+        new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8 })
+      );
+      chuck.position.set(0, 5.15, 0);
+      g.add(chuck);
+
+      // 正在測試的 12 吋金黃矽晶圓 (Wafer on Chuck)
+      const wafer = new THREE.Mesh(
+        new THREE.CylinderGeometry(2.1, 2.1, 0.08, 32),
+        new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.9, roughness: 0.1 })
+      );
+      wafer.position.set(0, 5.35, 0);
+      wafer.visible = false; // 待 FOUP 抵達後才加載
+      g.add(wafer);
+
+      // FOUP Load Port (機台進料口，對位 OHT 天車吊爪垂直落點)
+      const loadPort = new THREE.Mesh(
+        new THREE.BoxGeometry(3.6, 1.2, 3.6),
+        new THREE.MeshStandardMaterial({ color: 0x1d4ed8, metalness: 0.8 })
+      );
+      loadPort.position.set(0, 2.0, 5.5);
+      g.add(loadPort);
+
+      // 三色狀態塔燈 (Tower Light)
+      const tMast = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.5, 16), new THREE.MeshStandardMaterial({ color: 0x64748b }));
+      tMast.position.set(4.2, 11.2, 4.2);
+      g.add(tMast);
+
+      const lightRed = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16), new THREE.MeshBasicMaterial({ color: 0x330000 }));
+      lightRed.position.set(4.2, 11.8, 4.2);
+      g.add(lightRed);
+
+      const lightYellow = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16), new THREE.MeshBasicMaterial({ color: 0x332200 }));
+      lightYellow.position.set(4.2, 12.3, 4.2);
+      g.add(lightYellow);
+
+      const lightGreen = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16), new THREE.MeshBasicMaterial({ color: 0x003300 }));
+      lightGreen.position.set(4.2, 12.8, 4.2);
+      g.add(lightGreen);
+
+      // 頂部可掀蓋的 Probe Card Bay
+      const headGroup = new THREE.Group();
+      headGroup.position.set(0, 8.5, 0);
+      g.add(headGroup);
+
+      const headCover = new THREE.Mesh(
+        new THREE.BoxGeometry(5.2, 1.2, 5.2),
+        new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7 })
+      );
+      headCover.position.y = 0.6;
+      headGroup.add(headCover);
+
+      // 機台內部探針卡
+      const cardSlot = createBareProbeCardMesh(0xe65100, `OLD-${proberId}`);
+      cardSlot.position.set(0, 0, 0);
+      headGroup.add(cardSlot);
+
+      scene.add(g);
+
+      return {
+        group: g,
+        headGroup: headGroup,
+        wafer: wafer,
+        cardSlot: cardSlot,
+        lightRed: lightRed,
+        lightYellow: lightYellow,
+        lightGreen: lightGreen,
+        foupOnMachine: null,
+        status: "NO_CARD" // 'NO_CARD' | 'CARD_READY' | 'TESTING'
+      };
+    }
+
+    const prober1 = createProberMachine("Prober_01", 12, -4);
+    const prober2 = createProberMachine("Prober_02", 24, -4);
+
+    // =========================================================================
+    // 10. 雙卡槽換卡 AGV 台車 (含車載換卡機械手臂 & 夾爪)
+    // =========================================================================
+    const agvVehicle = new THREE.Group();
+    agvVehicle.position.set(-6, 0, 10);
+    agvVehicle.userData = { name: "雙工位探針卡換卡 AGV (含車載機械夾爪手臂)" };
+    scene.add(agvVehicle);
+
+    // AGV 底盤
+    const agvChassis = new THREE.Mesh(
+      new THREE.BoxGeometry(6.6, 1.5, 4.6),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.3 })
+    );
+    agvChassis.position.y = 1.0;
+    agvChassis.castShadow = true;
+    agvVehicle.add(agvChassis);
+
+    // 4 只全向輪
+    [[-2.5, 0.6, 2.3], [2.5, 0.6, 2.3], [-2.5, 0.6, -2.3], [2.5, 0.6, -2.3]].forEach(([wx, wy, wz]) => {
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.4, 24), new THREE.MeshStandardMaterial({ color: 0x090d16 }));
       wheel.rotation.z = Math.PI / 2;
       wheel.position.set(wx, wy, wz);
-      agvGroup.add(wheel);
+      agvVehicle.add(wheel);
     });
 
-    // 車頭雷達光達與高光警示燈
-    const lidarGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.4, 16);
-    const lidarMat = new THREE.MeshBasicMaterial({ color: 0x00d2ff });
-    const lidar = new THREE.Mesh(lidarGeo, lidarMat);
-    lidar.position.set(2.8, 1.8, 0);
-    agvGroup.add(lidar);
+    // 雙卡槽工位 (Slot 1 & Slot 2 托盤)
+    const tray1 = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.3, 3.4), new THREE.MeshStandardMaterial({ color: 0x166534, metalness: 0.6 }));
+    tray1.position.set(-1.6, 1.85, 0);
+    agvVehicle.add(tray1);
 
-    // 雙卡槽工位 (SLOT 1 & SLOT 2)
-    // Slot 1 托盤 (裝載新卡)
-    const tray1Geo = new THREE.BoxGeometry(2.6, 0.3, 3.6);
-    const tray1Mat = new THREE.MeshStandardMaterial({ color: 0x166534, metalness: 0.6 });
-    const tray1 = new THREE.Mesh(tray1Geo, tray1Mat);
-    tray1.position.set(-1.4, 1.8, 0);
-    agvGroup.add(tray1);
+    const tray2 = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.3, 3.4), new THREE.MeshStandardMaterial({ color: 0x9a3412, metalness: 0.6 }));
+    tray2.position.set(1.6, 1.85, 0);
+    agvVehicle.add(tray2);
 
-    // Slot 1 裡的新探針卡 (綠色 PCB)
-    const cardInSlot1 = createProbeCardMesh(0x16a34a, "NEW");
-    cardInSlot1.position.set(-1.4, 2.1, 0);
-    agvGroup.add(cardInSlot1);
+    // 車載機械手臂柱與夾爪 (AGV Robot Arm on Vehicle)
+    const agvArmGroup = new THREE.Group();
+    agvArmGroup.position.set(0, 1.9, 0);
+    agvVehicle.add(agvArmGroup);
 
-    // Slot 2 托盤 (預留給舊卡)
-    const tray2Geo = new THREE.BoxGeometry(2.6, 0.3, 3.6);
-    const tray2Mat = new THREE.MeshStandardMaterial({ color: 0x9a3412, metalness: 0.6 });
-    const tray2 = new THREE.Mesh(tray2Geo, tray2Mat);
-    tray2.position.set(1.4, 1.8, 0);
-    agvGroup.add(tray2);
+    // 手臂底座旋轉台
+    const armBase = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.7, 0.5, 20), new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.9 }));
+    agvArmGroup.add(armBase);
 
-    // Slot 2 裡的舊探針卡 (初始隱藏，換卡後顯示)
-    const cardInSlot2 = createProbeCardMesh(0xe65100, "OLD");
-    cardInSlot2.position.set(1.4, 2.1, 0);
-    cardInSlot2.visible = false;
-    agvGroup.add(cardInSlot2);
+    // 手臂伸縮連桿 (Telescoping Boom)
+    const armBoom = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 3.2), new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.8 }));
+    armBoom.position.set(0, 0.6, 0);
+    agvArmGroup.add(armBoom);
+
+    // 夾爪 (Gripper Head)
+    const agvGripper = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.2, 0.6), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.9 }));
+    agvGripper.position.set(0, 0.6, 1.6);
+    agvArmGroup.add(agvGripper);
+
+    // 車上承載之卡片 (由車載手臂夾取時動態顯示)
+    const cardOnAgvSlot1 = createBareProbeCardMesh(0x16a34a, "PC-NEW-88");
+    cardOnAgvSlot1.position.set(-1.6, 2.1, 0);
+    cardOnAgvSlot1.visible = false;
+    agvVehicle.add(cardOnAgvSlot1);
+
+    const cardOnAgvSlot2 = createBareProbeCardMesh(0xe65100, "OLD-CARD");
+    cardOnAgvSlot2.position.set(1.6, 2.1, 0);
+    cardOnAgvSlot2.visible = false;
+    agvVehicle.add(cardOnAgvSlot2);
 
     // =========================================================================
-    // 7. 3D 動態控制邏輯 (FOUP 存取與雙卡槽換卡流程)
+    // 11. 系統邏輯與通訊日誌
     // =========================================================================
+    let targetProberId = 1; // 1 or 2
     let isBusy = false;
-    let slot1HasCard = true;
-    let slot2HasCard = false;
-    let proberHasCard = 'OLD';
+    let slot1Loaded = false;
+    let slot2Loaded = false;
 
     const modeText = document.getElementById('mode-text');
     const logBox = document.getElementById('log-box');
@@ -825,7 +1038,7 @@
     const slot1Txt = document.getElementById('slot-1-txt');
     const slot2Txt = document.getElementById('slot-2-txt');
 
-    function addLog(msg, colorClass = '') {
+    function log(msg, colorClass = '') {
       const line = document.createElement('div');
       line.className = `log-line ${colorClass}`;
       const time = new Date().toTimeString().split(' ')[0];
@@ -837,269 +1050,379 @@
     const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
     function syncUI() {
-      if (slot1HasCard) {
-        cardInSlot1.visible = true;
+      // Slot 1
+      if (slot1Loaded) {
+        cardOnAgvSlot1.visible = true;
         slot1UI.classList.add('active');
         slot1Txt.textContent = 'PC-NEW-88';
         slot1Txt.style.color = 'var(--green)';
       } else {
-        cardInSlot1.visible = false;
+        cardOnAgvSlot1.visible = false;
         slot1UI.classList.remove('active');
         slot1Txt.textContent = '(空 EMPTY)';
         slot1Txt.style.color = 'var(--text-muted)';
       }
 
-      if (slot2HasCard) {
-        cardInSlot2.visible = true;
+      // Slot 2
+      if (slot2Loaded) {
+        cardOnAgvSlot2.visible = true;
         slot2UI.classList.add('active');
-        slot2Txt.textContent = 'PC-OLD-01';
+        slot2Txt.textContent = 'PC-OLD';
         slot2Txt.style.color = 'var(--orange)';
       } else {
-        cardInSlot2.visible = false;
+        cardOnAgvSlot2.visible = false;
         slot2UI.classList.remove('active');
         slot2Txt.textContent = '(空 EMPTY)';
         slot2Txt.style.color = 'var(--text-muted)';
       }
 
-      if (proberHasCard === 'OLD') {
-        cardInProber.visible = true;
-        cardInProber.children[0].material.color.setHex(0xe65100);
-      } else if (proberHasCard === 'NEW') {
-        cardInProber.visible = true;
-        cardInProber.children[0].material.color.setHex(0x16a34a);
-      } else {
-        cardInProber.visible = false;
-      }
+      // 更新機台狀態與指示燈
+      [prober1, prober2].forEach((p, idx) => {
+        const pNum = idx + 1;
+        const ind = document.getElementById(`ind-p${pNum}`);
+        const cardTxt = document.getElementById(`p${pNum}-card-status`);
+        const foupTxt = document.getElementById(`p${pNum}-foup-status`);
+        const cardDiv = document.getElementById(`card-p${pNum}`);
+
+        if (p.status === 'NO_CARD') {
+          p.lightRed.material.color.setHex(0xff0000);
+          p.lightYellow.material.color.setHex(0x332200);
+          p.lightGreen.material.color.setHex(0x003300);
+          ind.style.background = '#ff3d00';
+          cardTxt.textContent = '舊卡 (需更換)';
+          cardTxt.style.color = '#ff9100';
+          foupTxt.textContent = '不可進料 (等待換卡)';
+          cardDiv.className = 'prober-card';
+        } else if (p.status === 'CARD_READY') {
+          p.lightRed.material.color.setHex(0x330000);
+          p.lightYellow.material.color.setHex(0x332200);
+          p.lightGreen.material.color.setHex(0x00e676);
+          ind.style.background = '#00e676';
+          cardTxt.textContent = '新卡 PC-NEW 就緒';
+          cardTxt.style.color = '#00e676';
+          foupTxt.textContent = 'AVAILABLE (可送 FOUP)';
+          cardDiv.className = 'prober-card ready';
+        } else if (p.status === 'TESTING') {
+          p.lightRed.material.color.setHex(0x330000);
+          p.lightYellow.material.color.setHex(0x332200);
+          p.lightGreen.material.color.setHex(0x00e676);
+          ind.style.background = '#00d2ff';
+          cardTxt.textContent = '新卡 PC-NEW 就緒';
+          cardTxt.style.color = '#00e676';
+          foupTxt.textContent = 'FOUP 測試運轉中';
+          cardDiv.className = 'prober-card testing';
+        }
+      });
     }
 
-    // 平滑數值內插動畫輔助函式
-    function animateVector3(obj, targetPos, duration) {
-      return new Promise(resolve => {
-        const startPos = obj.position.clone();
-        const startTime = performance.now();
+    // 內插位移動畫
+    function lerpVector3(obj, target, duration) {
+      return new Promise(res => {
+        const start = obj.position.clone();
+        const st = performance.now();
         function update() {
           const now = performance.now();
-          const progress = Math.min((now - startTime) / duration, 1);
-          // Ease-in-out
-          const ease = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
-          obj.position.lerpVectors(startPos, targetPos, ease);
-          if (progress < 1) {
-            requestAnimationFrame(update);
-          } else {
-            resolve();
-          }
+          const p = Math.min((now - st) / duration, 1);
+          const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+          obj.position.lerpVectors(start, target, ease);
+          if (p < 1) requestAnimationFrame(update);
+          else res();
         }
         update();
       });
     }
 
-    // 動作 1: FOUP 出庫 (Slot 1 -> I/O Port)
-    async function doFoupRetrieve() {
+    // =========================================================================
+    // 12. 動作 1: 探針卡取箱 ➔ 脫箱移至出口載台
+    // =========================================================================
+    async function doStepUnbox() {
       if (isBusy) return;
       isBusy = true;
-      modeText.textContent = '3D 執行中：FOUP 自動出庫';
-      addLog('SECS S2F41: [RETRIEVE FOUP W-9921 from Slot 01]', 'log-cyan');
+      modeText.textContent = '執行中：PC 卡庫取箱與脫箱作業';
+      log('PC Stocker: 從 Slot 5 抽出保護箱，送入脫穿箱機台...', 'log-cyan');
 
-      // 升降機上升到 Slot 1
-      await animateVector3(craneGroup, new THREE.Vector3(0, 11, 0), 600);
-      addLog('Stacker Crane 機械夾爪鎖定 FOUP 頂部法蘭...', 'log-cyan');
-      await sleep(400);
+      // 脫箱機頂蓋掀開
+      await lerpVector3(btLid, new THREE.Vector3(0, 6.4, 0), 600);
+      await sleep(300);
 
-      // 手臂與 FOUP 一起移至 Load Port (y: 2.2, z: 2.2)
-      const targetCrane = new THREE.Vector3(0, 2.2, 2.5);
-      const targetFoup = new THREE.Vector3(-16, 2.8, 2.2);
+      // 裸卡從脫箱機內部升上出口載台
+      bareCardNew.visible = true;
+      await lerpVector3(bareCardNew, new THREE.Vector3(-14, 4.9, 8), 700);
 
-      animateVector3(craneGroup, targetCrane, 1200);
-      await animateVector3(foupGroup, targetFoup, 1200);
+      // 頂蓋閉合
+      await lerpVector3(btLid, new THREE.Vector3(0, 5.2, 0), 500);
 
-      addLog('FOUP 順利移至 Stocker I/O Port 載台，出庫完成！', 'log-green');
-      modeText.textContent = '3D 系統待命 (IDLE)';
+      log('脫箱完成！裸探針卡 PC-NEW-88 已在出口載台等待 AGV 夾取', 'log-green');
+      modeText.textContent = '3D 產線待命 (IDLE)';
       isBusy = false;
-    }
-
-    // 動作 2: FOUP 回存 (I/O Port -> Slot 4)
-    async function doFoupStore() {
-      if (isBusy) return;
-      isBusy = true;
-      modeText.textContent = '3D 執行中：FOUP 自動入庫存儲';
-      addLog('SECS S2F41: [STORE FOUP W-9921 to Slot 04]', 'log-cyan');
-
-      // 夾取並提升至 Slot 4 (x: 2.2, y: 6)
-      const targetCrane = new THREE.Vector3(0, 6, 0);
-      const targetFoup = new THREE.Vector3(-16 + 2.2, 6.6, -4 - 2.5);
-
-      animateVector3(craneGroup, targetCrane, 1200);
-      await animateVector3(foupGroup, targetFoup, 1200);
-
-      addLog('FOUP 已存入 Slot 04 庫位，RFID 登記完畢！', 'log-green');
-      modeText.textContent = '3D 系統待命 (IDLE)';
-      isBusy = false;
-    }
-
-    // 動作 3: 雙卡槽 AGV 出發前往 Prober 機台
-    async function doAgvMoveToProber() {
-      if (isBusy) return;
-      isBusy = true;
-      modeText.textContent = '3D 執行中：雙卡槽 AGV 出發前往 Prober';
-      addLog('AGVS: AMR-07 載運【新卡 PC-NEW-88】沿導引線出發...', 'log-orange');
-
-      // 沿路徑平滑移動: (-14, 0, 10) -> (14, 0, 10) -> (14, 0, 2)
-      await animateVector3(agvGroup, new THREE.Vector3(14, 0, 10), 1400);
-      await animateVector3(agvGroup, new THREE.Vector3(14, 0, 2), 1000);
-
-      addLog('AGV 抵達 Prober 機台前工位，完成微米級光電對位 (Docked)', 'log-green');
-      modeText.textContent = '3D 系統待命 (IDLE)';
-      isBusy = false;
-    }
-
-    // 動作 4: 機台掀蓋，卸下舊卡放入 AGV Slot 2
-    async function doSwapOldCard() {
-      if (isBusy) return;
-      if (proberHasCard !== 'OLD') {
-        addLog('提示: 機台內已無舊卡可卸載', 'log-orange');
-        return;
-      }
-      isBusy = true;
-      modeText.textContent = '3D 執行中：機台掀蓋，舊卡卸入 Slot 2';
-      addLog('Prober 機台掀蓋升起，氣壓吸盤將舊卡拔出...', 'log-orange');
-
-      // 掀蓋旋轉動畫
-      const startRot = proberHeadGroup.rotation.x;
-      const targetRot = -Math.PI / 4;
-      await new Promise(res => {
-        let st = performance.now();
-        function loop() {
-          let p = Math.min((performance.now() - st) / 600, 1);
-          proberHeadGroup.rotation.x = startRot + (targetRot - startRot) * p;
-          if (p < 1) requestAnimationFrame(loop);
-          else res();
-        }
-        loop();
-      });
-
-      await sleep(400);
-
-      // 舊卡移入 AGV Slot 2
-      proberHasCard = 'NONE';
-      slot2HasCard = true;
-      syncUI();
-      addLog('【舊卡 PC-01】成功裝入 AGV【Slot 2】完成鎖固！', 'log-green');
-
-      modeText.textContent = '3D 系統待命 (IDLE)';
-      isBusy = false;
-    }
-
-    // 動作 5: 將 AGV Slot 1 新卡裝入機台對位
-    async function doSwapNewCard() {
-      if (isBusy) return;
-      if (!slot1HasCard) {
-        addLog('提示: AGV Slot 1 沒有新卡可供裝載', 'log-orange');
-        return;
-      }
-      isBusy = true;
-      modeText.textContent = '3D 執行中：Slot 1 新卡裝入機台';
-      addLog('機械傳送機構夾取 AGV【Slot 1】新探針卡裝入 Prober...', 'log-cyan');
-
-      slot1HasCard = false;
-      proberHasCard = 'NEW';
-      syncUI();
-      await sleep(600);
-
-      // 闔蓋旋轉動畫
-      const startRot = proberHeadGroup.rotation.x;
-      const targetRot = 0;
-      await new Promise(res => {
-        let st = performance.now();
-        function loop() {
-          let p = Math.min((performance.now() - st) / 600, 1);
-          proberHeadGroup.rotation.x = startRot + (targetRot - startRot) * p;
-          if (p < 1) requestAnimationFrame(loop);
-          else res();
-        }
-        loop();
-      });
-
-      addLog('【新卡 PC-NEW-88】鎖定完畢，測試頭壓合，電氣測試通過！', 'log-green');
-      modeText.textContent = '3D 系統待命 (IDLE)';
-      isBusy = false;
-    }
-
-    // 動作 6: AGV 載運舊卡返航回庫
-    async function doAgvReturn() {
-      if (isBusy) return;
-      isBusy = true;
-      modeText.textContent = '3D 執行中：AGV 載舊卡返航回庫';
-      addLog('AGVS: AGV 載運【舊卡 PC-01】返航庫房進行清潔與針尖點檢...', 'log-orange');
-
-      // 沿導引線原路退回: (14, 0, 2) -> (14, 0, 10) -> (-14, 0, 10)
-      await animateVector3(agvGroup, new THREE.Vector3(14, 0, 10), 1000);
-      await animateVector3(agvGroup, new THREE.Vector3(-14, 0, 10), 1400);
-
-      addLog('AGV 已安全停靠 Home 充電位，完成換卡循環！', 'log-green');
-      modeText.textContent = '3D 系統待命 (IDLE)';
-      isBusy = false;
-    }
-
-    // 一鍵全流程
-    async function doAutoCycle() {
-      if (isBusy) return;
-      addLog('=========================================', 'log-cyan');
-      addLog('>>> 啟動 3D 全廠 FOUP 存取與雙卡槽換卡完整巡迴 <<<', 'log-cyan');
-      addLog('=========================================', 'log-cyan');
-
-      await doFoupRetrieve();
-      await sleep(600);
-      await doAgvMoveToProber();
-      await sleep(600);
-      await doSwapOldCard();
-      await sleep(600);
-      await doSwapNewCard();
-      await sleep(600);
-      await doAgvReturn();
-      await sleep(600);
-      await doFoupStore();
-
-      addLog('>>> 3D 全流程自動化圓滿完成！<<<', 'log-green');
-    }
-
-    // 重置 3D
-    function doReset() {
-      isBusy = false;
-      slot1HasCard = true;
-      slot2HasCard = false;
-      proberHasCard = 'OLD';
-
-      foupGroup.position.set(-16 + slotPositions[0].x, slotPositions[0].y + 0.6, -4 + slotPositions[0].z);
-      craneGroup.position.set(0, 11, 0);
-      agvGroup.position.set(-14, 0, 10);
-      proberHeadGroup.rotation.x = 0;
-
-      syncUI();
-      modeText.textContent = '3D 系統待命 (IDLE)';
-      addLog('3D 所有模型位置已復原重置', 'log-orange');
     }
 
     // =========================================================================
-    // 8. 視角切換控制 (Preset Cameras)
+    // 13. 動作 2: AGV 車載夾爪夾取裸卡上車 (Slot 1)
     // =========================================================================
+    async function doStepAgvPick() {
+      if (isBusy) return;
+      isBusy = true;
+      modeText.textContent = '執行中：AGV 車載手臂夾取新卡上車';
+      log('AGV #07: 行駛至脫箱工作站載台前...', 'log-orange');
+
+      // AGV 靠泊脫箱載台旁 (-10, 0, 8)
+      await lerpVector3(agvVehicle, new THREE.Vector3(-10, 0, 8), 1000);
+
+      // AGV 車載機械手臂旋轉並伸展夾取
+      log('AGV 車載機械夾爪伸出，鎖定裸卡對位把手...', 'log-cyan');
+      await lerpVector3(agvArmGroup, new THREE.Vector3(-1.4, 2.5, 0), 600);
+      await sleep(300);
+
+      // 裸卡被夾起並移入 AGV Slot 1
+      bareCardNew.visible = false;
+      slot1Loaded = true;
+      syncUI();
+      await lerpVector3(agvArmGroup, new THREE.Vector3(0, 1.9, 0), 600);
+
+      log('新探針卡 PC-NEW-88 已裝入 AGV【Slot 1】托盤！', 'log-green');
+      modeText.textContent = '3D 產線待命 (IDLE)';
+      isBusy = false;
+    }
+
+    // =========================================================================
+    // 14. 動作 3: AGV 駛向機台 ➔ 車載手臂換卡 (卸舊卡入Slot 2 / 新卡入機台)
+    // =========================================================================
+    async function doStepAgvSwap() {
+      if (isBusy) return;
+      if (!slot1Loaded) {
+        log('錯誤: AGV Slot 1 尚未裝載新卡，請先執行脫箱與夾取！', 'log-red');
+        return;
+      }
+      isBusy = true;
+      const target = targetProberId === 1 ? prober1 : prober2;
+      const dockX = targetProberId === 1 ? 12 : 24;
+
+      modeText.textContent = `執行中：AGV 駛向 Prober #${targetProberId} 並換卡`;
+      log(`AGV #07: 沿地面導線開往 Prober #${targetProberId} 前對位...`, 'log-orange');
+
+      // 行駛到指定機台前 (dockX, 0, 2)
+      await lerpVector3(agvVehicle, new THREE.Vector3(dockX, 0, 2), 1600);
+      log(`AGV 到達 Prober #${targetProberId} 換卡工位，光電定位完成`, 'log-green');
+
+      // 機台掀蓋
+      log(`Prober #${targetProberId} 測試艙蓋掀開，準備換卡...`, 'log-orange');
+      target.headGroup.rotation.x = -Math.PI / 4;
+      await sleep(500);
+
+      // AGV 手臂伸入取舊卡
+      log('AGV 車載手臂伸入機台，夾取舊卡並退入【Slot 2】...', 'log-cyan');
+      await sleep(500);
+      target.cardSlot.visible = false;
+      slot2Loaded = true;
+      syncUI();
+      await sleep(400);
+
+      // AGV 手臂取出 Slot 1 新卡裝入機台
+      log('AGV 車載手臂將【Slot 1】新探針卡裝入機台並鎖固...', 'log-cyan');
+      slot1Loaded = false;
+      target.cardSlot.visible = true;
+      target.cardSlot.children[0].material.color.setHex(0x16a34a); // 變新卡綠色
+      syncUI();
+      await sleep(500);
+
+      // 機台闔蓋
+      target.headGroup.rotation.x = 0;
+      target.status = 'CARD_READY'; // 狀態轉為可用！
+      syncUI();
+
+      log(`Prober #${targetProberId} 新探針卡安裝完成！機台狀態轉為綠燈 AVAILABLE！`, 'log-green');
+      modeText.textContent = '3D 產線待命 (IDLE)';
+      isBusy = false;
+    }
+
+    // =========================================================================
+    // 15. 動作 4: 機台亮綠燈 ➔ OHT 環狀天車吊送 FOUP
+    // =========================================================================
+    async function doStepOhtFoup() {
+      if (isBusy) return;
+      const target = targetProberId === 1 ? prober1 : prober2;
+      const targetX = targetProberId === 1 ? 12 : 24;
+
+      if (target.status === 'NO_CARD') {
+        log(`互鎖攔截 (Interlock Blocked): Prober #${targetProberId} 尚未安裝新探針卡，拒絕派送 FOUP！`, 'log-red');
+        return;
+      }
+
+      isBusy = true;
+      modeText.textContent = `執行中：OHT 天車吊爪取 FOUP 送往 Prober #${targetProberId}`;
+      log(`OHT: 接收到 Prober #${targetProberId} 綠燈可用信號，開始吊裝 FOUP...`, 'log-cyan');
+
+      // OHT 天車移動到 FOUP Stocker 上方 (-24, 20, -12)
+      await lerpVector3(ohtVehicle, new THREE.Vector3(-24, ohtRailHeight, -12), 1000);
+
+      // 天車吊爪下降抓取 FOUP (Y: 15)
+      log('OHT 吊爪垂直下降至 FOUP Stocker 頂部載台...', 'log-cyan');
+      await lerpVector3(ohtHoist, new THREE.Vector3(0, -5.2, 0), 1000);
+      await sleep(300);
+
+      // 吊爪升起帶著 FOUP (Y: 20)
+      activeFoup.position.set(-24, ohtRailHeight - 2, -12);
+      await lerpVector3(ohtHoist, new THREE.Vector3(0, -1.2, 0), 1000);
+
+      // OHT 天車帶著 FOUP 沿環狀軌道滑行至指定機台上方
+      log(`OHT 載運 FOUP 沿空中軌道滑行前往 Prober #${targetProberId}...`, 'log-orange');
+      // (-24, 20, -12) -> (targetX, 20, -12) -> (targetX, 20, 1.5)
+      await lerpVector3(ohtVehicle, new THREE.Vector3(targetX, ohtRailHeight, -12), 1600);
+      activeFoup.position.set(targetX, ohtRailHeight - 2, -12);
+
+      await lerpVector3(ohtVehicle, new THREE.Vector3(targetX, ohtRailHeight, 1.5), 1000);
+      activeFoup.position.set(targetX, ohtRailHeight - 2, 1.5);
+
+      // 天車吊爪垂直下降將 FOUP 放至機台 Load Port (Y: 3.2)
+      log(`OHT 鋼索下降，將 FOUP 穩妥置入 Prober #${targetProberId} Load Port...`, 'log-cyan');
+      await lerpVector3(ohtHoist, new THREE.Vector3(0, -16.5, 0), 1400);
+      activeFoup.position.set(targetX, 3.2, 1.5);
+      await sleep(300);
+
+      // 吊爪升回天車
+      await lerpVector3(ohtHoist, new THREE.Vector3(0, -1.2, 0), 1000);
+
+      // 機台啟動晶圓測試
+      target.status = 'TESTING';
+      target.wafer.visible = true;
+      syncUI();
+      log(`Prober #${targetProberId} 晶圓針測程序正式啟動！(Wafer Probing Active)`, 'log-green');
+
+      modeText.textContent = '3D 產線待命 (IDLE)';
+      isBusy = false;
+    }
+
+    // =========================================================================
+    // 16. 動作 5: AGV 載舊卡返航 ➔ 穿箱回存 PC 卡庫
+    // =========================================================================
+    async function doStepAgvReturn() {
+      if (isBusy) return;
+      isBusy = true;
+      modeText.textContent = '執行中：AGV 載舊卡返航與穿箱作業';
+      log('AGV #07: 載運【舊卡 PC-OLD】返航卡庫脫穿箱站...', 'log-orange');
+
+      // 返航至脫箱站 (-10, 0, 8)
+      await lerpVector3(agvVehicle, new THREE.Vector3(-10, 0, 8), 1600);
+
+      // 車載手臂夾取舊卡卸到工作台
+      log('AGV 車載手臂將舊卡取出放置於裝箱工作台...', 'log-cyan');
+      slot2Loaded = false;
+      syncUI();
+      await sleep(500);
+
+      // 脫穿箱機台開蓋裝箱 (穿箱)
+      log('脫穿箱機台開蓋裝入保護箱，完成鎖扣 (穿箱完成)，回存 PC Stocker！', 'log-green');
+      await lerpVector3(btLid, new THREE.Vector3(0, 6.4, 0), 500);
+      await sleep(300);
+      await lerpVector3(btLid, new THREE.Vector3(0, 5.2, 0), 500);
+
+      // AGV 回原點
+      await lerpVector3(agvVehicle, new THREE.Vector3(-6, 0, 10), 800);
+
+      log('全套探針卡防護與回存程序圓滿達成！', 'log-green');
+      modeText.textContent = '3D 產線待命 (IDLE)';
+      isBusy = false;
+    }
+
+    // =========================================================================
+    // 17. 一鍵全自動循環 (Auto Full Loop across Prober 1 & 2)
+    // =========================================================================
+    async function doAutoAll() {
+      if (isBusy) return;
+      log('=====================================================', 'log-cyan');
+      log('>>> 啟動晶圓廠 3D 全流程自動化 (Prober 1 & 2 完整循環) <<<', 'log-cyan');
+      log('=====================================================', 'log-cyan');
+
+      // 第一輪：處理 Prober #01
+      setTargetProber(1);
+      await doStepUnbox();
+      await sleep(600);
+      await doStepAgvPick();
+      await sleep(600);
+      await doStepAgvSwap();
+      await sleep(600);
+      await doStepOhtFoup();
+      await sleep(600);
+      await doStepAgvReturn();
+      await sleep(800);
+
+      // 第二輪：處理 Prober #02
+      setTargetProber(2);
+      await doStepUnbox();
+      await sleep(600);
+      await doStepAgvPick();
+      await sleep(600);
+      await doStepAgvSwap();
+      await sleep(600);
+      await doStepOhtFoup();
+      await sleep(600);
+      await doStepAgvReturn();
+
+      log('>>> Prober 1 & Prober 2 雙機台自動換卡與送晶圓全流程圓滿完成！<<<', 'log-green');
+    }
+
+    // 重置所有 3D 模型
+    function doResetAll() {
+      isBusy = false;
+      slot1Loaded = false;
+      slot2Loaded = false;
+
+      // 復原 FOUP
+      activeFoup.position.set(-24, 15, -12);
+      ohtVehicle.position.set(-24, ohtRailHeight, -12);
+      ohtHoist.position.set(0, -1.2, 0);
+
+      // 復原 AGV
+      agvVehicle.position.set(-6, 0, 10);
+      agvArmGroup.position.set(0, 1.9, 0);
+      bareCardNew.position.set(-14, 4.8, 8);
+      bareCardNew.visible = true;
+
+      // 復原 Probers
+      [prober1, prober2].forEach(p => {
+        p.status = 'NO_CARD';
+        p.headGroup.rotation.x = 0;
+        p.cardSlot.visible = true;
+        p.cardSlot.children[0].material.color.setHex(0xe65100);
+        p.wafer.visible = false;
+      });
+
+      syncUI();
+      modeText.textContent = '3D 產線待命 (IDLE)';
+      log('系統所有 3D 模型位置與機台互鎖狀態已全部重置', 'log-orange');
+    }
+
+    // 機台切換按鈕
+    window.setTargetProber = function(id) {
+      targetProberId = id;
+      document.getElementById('pick-p1').classList.toggle('active', id === 1);
+      document.getElementById('pick-p2').classList.toggle('active', id === 2);
+      log(`操作目標已切換為：Prober #${id}`, 'log-cyan');
+    };
+
+    // 鏡頭快速切換
     window.setCameraView = function(view) {
       if (view === 'iso') {
-        animateVector3(camera, new THREE.Vector3(0, 32, 42), 800);
-        controls.target.set(0, 4, 0);
+        lerpVector3(camera, new THREE.Vector3(-8, 38, 48), 800);
+        controls.target.set(0, 6, 0);
       } else if (view === 'stocker') {
-        animateVector3(camera, new THREE.Vector3(-16, 18, 16), 800);
-        controls.target.set(-16, 8, -4);
-      } else if (view === 'prober') {
-        animateVector3(camera, new THREE.Vector3(16, 16, 16), 800);
-        controls.target.set(16, 6, -4);
+        lerpVector3(camera, new THREE.Vector3(-24, 24, 26), 800);
+        controls.target.set(-20, 8, -2);
+      } else if (view === 'probers') {
+        lerpVector3(camera, new THREE.Vector3(18, 22, 26), 800);
+        controls.target.set(18, 6, -2);
+      } else if (view === 'oht') {
+        lerpVector3(camera, new THREE.Vector3(ohtVehicle.position.x, 26, ohtVehicle.position.z + 18), 800);
+        controls.target.copy(ohtVehicle.position);
       } else if (view === 'agv') {
-        animateVector3(camera, new THREE.Vector3(agvGroup.position.x, 14, agvGroup.position.z + 18), 800);
-        controls.target.copy(agvGroup.position);
+        lerpVector3(camera, new THREE.Vector3(agvVehicle.position.x, 14, agvVehicle.position.z + 16), 800);
+        controls.target.copy(agvVehicle.position);
       }
     };
 
     // =========================================================================
-    // 9. 3D Raycasting (滑鼠直接點擊 3D 模型觸發操作)
+    // 18. 3D 滑鼠射線直接點選 (Raycasting)
     // =========================================================================
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
@@ -1111,7 +1434,8 @@
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects([foupGroup, stockerGroup, agvGroup, proberGroup], true);
+      const objects = [foupStocker, pcStockerGroup, boxToolGroup, agvVehicle, ohtVehicle, prober1.group, prober2.group, activeFoup];
+      const intersects = raycaster.intersectObjects(objects, true);
 
       if (intersects.length > 0) {
         let topObj = intersects[0].object;
@@ -1119,7 +1443,7 @@
           topObj = topObj.parent;
         }
         if (topObj.userData && topObj.userData.name) {
-          hudLabel.textContent = "👆 點選：" + topObj.userData.name;
+          hudLabel.textContent = "👆 點選操作：" + topObj.userData.name;
           hudLabel.style.left = (e.clientX + 16) + 'px';
           hudLabel.style.top = (e.clientY + 16) + 'px';
           hudLabel.style.display = 'block';
@@ -1132,37 +1456,39 @@
     });
 
     window.addEventListener('click', (e) => {
-      // 避免點擊 UI 面板時觸發 3D raycast
       if (e.target.closest('.hud-panel') || e.target.closest('header')) return;
 
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects([foupGroup, stockerGroup, agvGroup, proberGroup], true);
+      const objects = [foupStocker, pcStockerGroup, boxToolGroup, agvVehicle, ohtVehicle, prober1.group, prober2.group, activeFoup];
+      const intersects = raycaster.intersectObjects(objects, true);
 
       if (intersects.length > 0) {
         let topObj = intersects[0].object;
         while (topObj.parent && !topObj.userData.name) {
           topObj = topObj.parent;
         }
-        if (topObj === foupGroup || topObj === stockerGroup) {
-          if (foupGroup.position.z > 0) doFoupStore();
-          else doFoupRetrieve();
-        } else if (topObj === agvGroup) {
-          if (agvGroup.position.x < 0) doAgvMoveToProber();
-          else if (proberHasCard === 'OLD') doSwapOldCard();
-          else if (slot1HasCard) doSwapNewCard();
-          else doAgvReturn();
-        } else if (topObj === proberGroup) {
-          if (agvGroup.position.x > 0) {
-            if (proberHasCard === 'OLD') doSwapOldCard();
-            else if (slot1HasCard) doSwapNewCard();
-          } else {
-            addLog('提示：請先讓雙卡槽 AGV 開往機台前才能對位換卡', 'log-orange');
-          }
+
+        if (topObj === pcStockerGroup || topObj === boxToolGroup) {
+          doStepUnbox();
+        } else if (topObj === agvVehicle) {
+          if (!slot1Loaded) doStepAgvPick();
+          else if (slot2Loaded) doStepAgvReturn();
+          else doStepAgvSwap();
+        } else if (topObj === prober1.group) {
+          setTargetProber(1);
+          if (prober1.status === 'CARD_READY') doStepOhtFoup();
+          else doStepAgvSwap();
+        } else if (topObj === prober2.group) {
+          setTargetProber(2);
+          if (prober2.status === 'CARD_READY') doStepOhtFoup();
+          else doStepAgvSwap();
+        } else if (topObj === ohtVehicle || topObj === activeFoup || topObj === foupStocker) {
+          doStepOhtFoup();
         }
       }
     });
 
-    // 視窗自適應
+    // 視窗縮放處理
     window.addEventListener('resize', () => {
       camera.aspect = container.clientWidth / container.clientHeight;
       camera.updateProjectionMatrix();
@@ -1170,26 +1496,25 @@
     });
 
     // 面板按鈕綁定
-    document.getElementById('btn-auto').addEventListener('click', doAutoCycle);
-    document.getElementById('btn-reset').addEventListener('click', doReset);
-    document.getElementById('btn-foup-out').addEventListener('click', doFoupRetrieve);
-    document.getElementById('btn-agv-go').addEventListener('click', doAgvMoveToProber);
-    document.getElementById('btn-swap-old').addEventListener('click', doSwapOldCard);
-    document.getElementById('btn-swap-new').addEventListener('click', doSwapNewCard);
-    document.getElementById('btn-agv-back').addEventListener('click', doAgvReturn);
-    document.getElementById('btn-foup-in').addEventListener('click', doFoupStore);
+    document.getElementById('btn-auto-all').addEventListener('click', doAutoAll);
+    document.getElementById('btn-reset-all').addEventListener('click', doResetAll);
+    document.getElementById('btn-step-unbox').addEventListener('click', doStepUnbox);
+    document.getElementById('btn-step-agv-pick').addEventListener('click', doStepAgvPick);
+    document.getElementById('btn-step-agv-swap').addEventListener('click', doStepAgvSwap);
+    document.getElementById('btn-step-oht-foup').addEventListener('click', doStepOhtFoup);
+    document.getElementById('btn-step-agv-return').addEventListener('click', doStepAgvReturn);
 
     // =========================================================================
-    // 10. 動畫迴圈渲染 (Three.js Render Loop)
+    // 19. 3D 渲染動畫迴圈 (Three.js Render Loop)
     // =========================================================================
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
 
-      // 微光脈衝動畫
-      const time = performance.now() * 0.003;
-      bluePoint.intensity = 2.0 + Math.sin(time) * 0.5;
-      greenPoint.intensity = 2.0 + Math.cos(time) * 0.5;
+      // 塔燈閃爍與光線呼吸
+      const t = performance.now() * 0.003;
+      cyanSpot.intensity = 2.0 + Math.sin(t) * 0.4;
+      greenSpot.intensity = 2.0 + Math.cos(t) * 0.4;
 
       renderer.render(scene, camera);
     }
