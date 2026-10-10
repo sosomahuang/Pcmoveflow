@@ -2253,10 +2253,8 @@ A5 0° A6 0° A7 0°</pre>
     let ohtIsBusy = false;
     let mrIsBusy = false;
 
-    // 車載卡籍記錄
-    let cardOnPlatformA_loaded = false; // 好卡
-    let cardOnPlatformB_loaded = false; // 壞卡
-    let activeDeckAtTop = 'A'; // 'A' or 'B'
+    // 車載卡籍記錄 (單一進出工位 ＋ 臂下雙槽卡匣)
+    // topStage_loaded, slotA_loaded, slotB_loaded, topCardColor 於上方已定義
 
     let ohtMode = 'PATROL';
     let ohtLoopProgress = 0.0;
@@ -2289,8 +2287,9 @@ A5 0° A6 0° A7 0°</pre>
     window.syncUI = function() {
       const t = i18n[currentLang];
 
-      cardOnPlatA.visible = cardOnPlatformA_loaded;
-      cardOnPlatB.visible = cardOnPlatformB_loaded;
+      if (typeof cardOnTopStage !== 'undefined') cardOnTopStage.visible = topStage_loaded;
+      if (typeof cardInSlotA !== 'undefined') cardInSlotA.visible = slotA_loaded;
+      if (typeof cardInSlotB !== 'undefined') cardInSlotB.visible = slotB_loaded;
 
 // 更新車載單一進出工位與臂下雙槽卡匣狀態
       const deckTopTxt = document.getElementById('deck-top-txt');
@@ -3164,15 +3163,39 @@ A5 0° A6 0° A7 0°</pre>
       prober2.installedCard.visible = false;
       prober2.wafer.visible = false;
 
-      // 復原 PC 儲位
+      // 復原 PC 儲位與保護箱
       slotData[0].state = 'GOOD_CARD';
       slotMeshList[0].userData.ledMesh.material.color.setHex(0x00e676);
+      const b0 = slotMeshList[0].userData.boxMesh;
+      if (b0) {
+        b0.position.set(-3.4, 8.6, 1.6);
+        if (b0.userData.lidMesh) b0.userData.lidMesh.position.set(0, 0.45, 0);
+        if (b0.userData.innerCard) {
+          b0.userData.innerCard.visible = true;
+          b0.userData.innerCard.children[0].material.color.setHex(0x16a34a);
+        }
+      }
 
       slotData[3].state = 'GOOD_CARD';
       slotMeshList[3].userData.ledMesh.material.color.setHex(0x00e676);
+      const b3 = slotMeshList[3].userData.boxMesh;
+      if (b3) {
+        b3.position.set(3.4, 10.2, 1.6);
+        if (b3.userData.lidMesh) b3.userData.lidMesh.position.set(0, 0.45, 0);
+        if (b3.userData.innerCard) {
+          b3.userData.innerCard.visible = true;
+          b3.userData.innerCard.children[0].material.color.setHex(0x16a34a);
+        }
+      }
 
       slotData[4].state = 'EMPTY_BOX';
       slotMeshList[4].userData.ledMesh.material.color.setHex(0x475569);
+      const b4 = slotMeshList[4].userData.boxMesh;
+      if (b4) {
+        b4.position.set(-3.4, 11.8, 1.6);
+        if (b4.userData.lidMesh) b4.userData.lidMesh.position.set(0, 0.45, 0);
+        if (b4.userData.innerCard) b4.userData.innerCard.visible = false;
+      }
 
       window.selectedTool = 1;
       selectTargetTool(1);
@@ -3248,10 +3271,11 @@ A5 0° A6 0° A7 0°</pre>
       if (e.target.closest('.hud-panel') || e.target.closest('header') || e.target.closest('#slot-modal') || e.target.closest('#btn-expand-panel') || e.target.closest('.floating-expand-btn')) return;
 
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(slotMeshList, true);
 
-      if (intersects.length > 0) {
-        const slotHit = intersects[0].object.userData.slotInfo;
+      // 1. 優先檢查是否點選 PC Stocker 儲位格子 (開啟儲位詳情彈窗)
+      const slotIntersects = raycaster.intersectObjects(slotMeshList, true);
+      if (slotIntersects.length > 0) {
+        const slotHit = slotIntersects[0].object.userData.slotInfo;
         if (slotHit) {
           document.getElementById('modal-slot-title').textContent = `${slotHit.id} 儲位卡籍狀態`;
           document.getElementById('modal-slot-id').textContent = slotHit.id;
@@ -3286,6 +3310,43 @@ A5 0° A6 0° A7 0°</pre>
 
           slotModal.style.display = 'block';
           log(`查詢儲位: 點擊檢視 ${slotHit.id} [${slotHit.state}]`, 'log-cyan');
+          return;
+        }
+      }
+
+      // 2. 檢查是否點選 3D 場景中主要設備實體 (KMR 車、Prober 機台、OHT 天車、Stocker)
+      const sceneObjects = [agvVehicle, prober1.group, prober2.group, ohtVehicle, pcStockerGroup, foupStocker];
+      const objIntersects = raycaster.intersectObjects(sceneObjects, true);
+      if (objIntersects.length > 0) {
+        let topObj = objIntersects[0].object;
+        while (topObj.parent && !topObj.userData.name) {
+          topObj = topObj.parent;
+        }
+        if (topObj === agvVehicle || (agvVehicle.children && agvVehicle.children.includes(topObj))) {
+          log('【3D 互動】點選 KUKA KMR iiwa 移動機器人，視角切換至 KUKA 車體！', 'log-cyan');
+          setCameraView('kuka');
+          return;
+        }
+        if (topObj === prober1.group || (prober1.group.children && prober1.group.children.includes(topObj))) {
+          log('【3D 互動】點選 TEL Prexa Prober #01，切換目標機台至 #01 並聚焦視角！', 'log-cyan');
+          selectTargetTool(1);
+          setCameraView('prober1');
+          return;
+        }
+        if (topObj === prober2.group || (prober2.group.children && prober2.group.children.includes(topObj))) {
+          log('【3D 互動】點選 TEL Prexa Prober #02，切換目標機台至 #02 並聚焦視角！', 'log-cyan');
+          selectTargetTool(2);
+          setCameraView('prober2');
+          return;
+        }
+        if (topObj === ohtVehicle || (ohtVehicle.children && ohtVehicle.children.includes(topObj))) {
+          log('【3D 互動】點選 AMHS OHT 天車，視角切換至天車軌道！', 'log-cyan');
+          setCameraView('ohtTop');
+          return;
+        }
+        if (topObj === pcStockerGroup || (pcStockerGroup.children && pcStockerGroup.children.includes(topObj))) {
+          log('【3D 互動】點選 PC Stocker 自動倉儲，視角切換至倉儲！', 'log-cyan');
+          setCameraView('pcstock');
           return;
         }
       }
