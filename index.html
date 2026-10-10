@@ -660,9 +660,10 @@
         btnSwapBlockedEmpty: "🚫 [ 無卡不可 SWAP ]",
         btnSwapBlockedProc: "🚫 [ 機台 Processing 禁止換卡 ]",
         // 車載狀態
-        deckTitle: "KUKA MR 車載雙層切換平台狀態",
-        deckTop: "頂部工作位：",
-        deckBottom: "車內下層艙：",
+        deckTitle: "KUKA MR 窄型車體與臂下雙槽卡匣",
+        deckTop: "車頂進出工位：",
+        deckSlotA: "臂下 Slot A (好卡槽)：",
+        deckSlotB: "臂下 Slot B (壞卡槽)：",
         emptyTxt: "(空 EMPTY)",
         goodTxt: "PC-GOOD-88 (良品好卡)",
         badTxt: "PC-BAD-01 (換下壞卡)"
@@ -703,9 +704,10 @@
         btnSwapCard: "🔄 SWAP P/C (Exchange Card)",
         btnSwapBlockedEmpty: "🚫 [ No Card: Swap Prohibited ]",
         btnSwapBlockedProc: "🚫 [ In-Process: Swap Prohibited ]",
-        deckTitle: "KUKA MR Dual Elevating Decks Status",
-        deckTop: "Top Deck: ",
-        deckBottom: "Lower Bay: ",
+        deckTitle: "KUKA MR Compact Body & Under-Arm Dual-Slot Magazine",
+        deckTop: "Top I/O Stage: ",
+        deckSlotA: "Under-Arm Slot A: ",
+        deckSlotB: "Under-Arm Slot B: ",
         emptyTxt: "(EMPTY)",
         goodTxt: "PC-GOOD-88 (Good Card)",
         badTxt: "PC-BAD-01 (Defect Card)"
@@ -748,6 +750,13 @@
         hints[1].innerHTML = t.hint2;
         hints[2].innerHTML = t.hint3;
       }
+
+      const dTopLbl = document.getElementById('deck-top-lbl');
+      if (dTopLbl) dTopLbl.textContent = t.deckTop;
+      const dSlotALbl = document.getElementById('deck-slot-a-lbl');
+      if (dSlotALbl) dSlotALbl.textContent = t.deckSlotA;
+      const dSlotBLbl = document.getElementById('deck-slot-b-lbl');
+      if (dSlotBLbl) dSlotBLbl.textContent = t.deckSlotB;
 
       if (window.syncUI) window.syncUI();
     }
@@ -946,12 +955,15 @@
       <!-- KUKA MR 車載雙層升降切換平台狀態 -->
       <div>
         <div class="section-title">
-          <span>KUKA MR 50%半透明車載平台</span>
-          <span style="font-size:9px; color:#ff5722;">ELEVATING DECKS</span>
+          <span>KUKA MR 七軸手臂 ＆ 置放區</span>
+          <span style="font-size:9px; color:#ff5722;">7-AXIS ARM</span>
         </div>
         <div class="deck-status-box">
-          <div><strong style="color:var(--accent);" id="deck-top-lbl">頂部工作位：</strong> <span id="deck-top-txt" style="color:var(--text-muted);">(空 EMPTY)</span></div>
-          <div><strong style="color:#ff5722;" id="deck-bot-lbl">車內下層艙：</strong> <span id="deck-bot-txt" style="color:var(--text-muted);">(空 EMPTY)</span></div>
+          <div><strong style="color:var(--accent);" id="deck-top-lbl">車頂進出工位：</strong> <span id="deck-top-txt" style="color:var(--text-muted);">(空 EMPTY)</span></div>
+          <div><strong style="color:var(--green);" id="deck-slot-a-lbl">臂下 Slot A (好卡槽)：</strong> <span id="deck-slot-a-txt" style="color:var(--text-muted);">(空 EMPTY)</span></div>
+          <div><strong style="color:#ff5722;" id="deck-slot-b-lbl">臂下 Slot B (壞卡槽)：</strong> <span id="deck-slot-b-txt" style="color:var(--text-muted);">(空 EMPTY)</span></div>
+          <pre id="joint-readout" style="margin-top:4px; font-family:Consolas,Monaco,monospace; font-size:10px; color:#38bdf8; white-space:pre;">A1 0° A2 0° A3 0° A4 0°
+A5 0° A6 0° A7 0°</pre>
         </div>
       </div>
 
@@ -1720,12 +1732,12 @@
       pccStageGroup.position.set(-2.0, 4.0, 0.4); // 平時縮在暗腔深處！
       g.add(pccStageGroup);
 
-      const rail1 = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 6.2, 12), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.95 }));
+      const rail1 = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 4.4, 12), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.95 }));
       rail1.rotation.x = Math.PI / 2;
       rail1.position.set(-1.4, -0.2, 0);
       pccStageGroup.add(rail1);
 
-      const rail2 = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 6.2, 12), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.95 }));
+      const rail2 = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 4.4, 12), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.95 }));
       rail2.rotation.x = Math.PI / 2;
       rail2.position.set(1.4, -0.2, 0);
       pccStageGroup.add(rail2);
@@ -1774,29 +1786,32 @@
     // =========================================================================
     const agvVehicle = new THREE.Group();
     agvVehicle.position.set(-6, 0, 12);
-    agvVehicle.userData = { name: "KUKA KMR iiwa (50%半透明雙平台升降版)" };
+    agvVehicle.userData = { name: "KUKA KMR iiwa (窄型車身 ＋ 臂下雙槽卡匣 ＋ 單一進出位)" };
     scene.add(agvVehicle);
 
-    // 深灰防撞底座 (緊湊 6.8 x 4.8)
-    const agvChassis = new THREE.Mesh(new THREE.BoxGeometry(6.8, 0.7, 4.8), new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.3 }));
+    // ★【深灰防撞底座 (7.2 x 4.4)】：車身全面變窄，還原真實 KMR iiwa 緊湊窄型底盤！
+    const agvChassis = new THREE.Mesh(
+      new THREE.BoxGeometry(7.2, 0.7, 4.4),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.3 })
+    );
     agvChassis.position.y = 0.35;
     agvChassis.castShadow = true;
     agvVehicle.add(agvChassis);
 
-    // 四角安全光達
-    [[-3.2, 2.2], [3.2, 2.2], [-3.2, -2.2], [3.2, -2.2]].forEach(([lx, lz]) => {
+    // 四角安全光達 (Z 縮減至 ±2.0)
+    [[-3.4, 2.0], [3.4, 2.0], [-3.4, -2.0], [3.4, -2.0]].forEach(([lx, lz]) => {
       const lidar = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9 }));
       lidar.position.set(lx, 0.4, lz);
       agvVehicle.add(lidar);
     });
 
-    // ★ 純白 30% 半透明流線型機身 (透明度 30% / Opacity 0.7，隱約透視車體內藏之第二張卡)
+    // ★【半透明白色流線型機身 (7.0 x 4.2，30% 透明度 / Opacity 0.7)】
     const agvTranslucentBody = new THREE.Mesh(
-      new THREE.BoxGeometry(6.6, 2.0, 4.6),
+      new THREE.BoxGeometry(7.0, 2.0, 4.2),
       new THREE.MeshStandardMaterial({
         color: 0xf8fafc,
         transparent: true,
-        opacity: 0.7, // 30% 透明度 (厚實潔淨白機身，微透視下層備用卡)
+        opacity: 0.7,
         roughness: 0.25,
         metalness: 0.25
       })
@@ -1805,132 +1820,222 @@
     agvVehicle.add(agvTranslucentBody);
 
     const kukaLogo = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.5), new THREE.MeshBasicMaterial({ color: 0xff5722 }));
-    kukaLogo.position.set(-2.2, 2.3, 2.32);
+    kukaLogo.position.set(-2.2, 2.3, 2.12);
     agvVehicle.add(kukaLogo);
 
-    // 後方手臂安裝台 (X = 2.0)
-    const armPedestal = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.8, 4.2), new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.4 }));
-    armPedestal.position.set(2.0, 3.1, 0);
+    // 手臂安裝基座：置於車身中前段 (X = -0.9, Z = 0)
+    const ARM_ROOT_X = -0.9;
+    const armPedestal = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.8, 1.9), new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.4 }));
+    armPedestal.position.set(ARM_ROOT_X, 3.1, 0);
     agvVehicle.add(armPedestal);
 
-    // ★【車載雙平台升降切換機構 ＆ 銀白色金屬載具圓盤】：
-    // 頂部工作工位在 X = -1.2, Z = 0
-    // Platform A (平台 1 / 好卡台)：可在頂部 Y = 2.8 或下沉至車內下層 Y = 1.0 (手臂下方 X = 1.2)
+    // =========================================================================
+    // ★【只保留一個車頂進出位置 (Top I/O Stage)】：
+    //   置於車頂中央 X = 1.9, Z = 0.0，為具備垂直升降功能之單一進出工作台！
+    // =========================================================================
     const silverDeckMat = new THREE.MeshStandardMaterial({ color: 0xd4d8e0, metalness: 0.85, roughness: 0.2 });
 
-    const agvPlatformA = new THREE.Group();
-    agvPlatformA.position.set(-1.2, 2.8, 0); // 初始在頂部
-    agvVehicle.add(agvPlatformA);
+    const agvElevatorStage = new THREE.Group();
+    agvElevatorStage.position.set(1.9, 2.8, 0.0); // 頂部進出基準位 Y = 2.8
+    agvVehicle.add(agvElevatorStage);
 
-    const platADeck = new THREE.Mesh(new THREE.CylinderGeometry(1.65, 1.65, 0.18, 32), silverDeckMat);
-    agvPlatformA.add(platADeck);
+    const topStageDeck = new THREE.Mesh(new THREE.CylinderGeometry(1.58, 1.58, 0.18, 40), silverDeckMat);
+    agvElevatorStage.add(topStageDeck);
 
-    const cardOnPlatA = createBareCardMesh(0x16a34a, "PC-GOOD-88");
-    cardOnPlatA.position.set(0, 0.2, 0);
-    cardOnPlatA.visible = false;
-    agvPlatformA.add(cardOnPlatA);
+    const topStageRim = new THREE.Mesh(new THREE.TorusGeometry(1.55, 0.05, 10, 48), new THREE.MeshStandardMaterial({ color: 0x00d2ff, metalness: 0.7 }));
+    topStageRim.rotation.x = Math.PI / 2;
+    topStageRim.position.y = 0.1;
+    agvElevatorStage.add(topStageRim);
 
-    // Platform B (平台 2 / 壞卡台)：可在頂部 Y = 2.8 或下沉至車內下層 Y = 1.0
-    const agvPlatformB = new THREE.Group();
-    agvPlatformB.position.set(1.2, 1.0, 0); // 初始在車內下層！
-    agvVehicle.add(agvPlatformB);
+    // 車頂進出工位上的實體卡片 (手爪放卡/取卡皆由此單一工位進出)
+    const cardOnTopStage = createBareCardMesh(0x16a34a, "PC-TOP-IO");
+    cardOnTopStage.position.set(0, 0.2, 0);
+    cardOnTopStage.visible = false;
+    agvElevatorStage.add(cardOnTopStage);
 
-    const platBDeck = new THREE.Mesh(new THREE.CylinderGeometry(1.65, 1.65, 0.18, 32), silverDeckMat);
-    agvPlatformB.add(platBDeck);
+    // =========================================================================
+    // ★【手臂下方內建兩個槽位 (Under-Arm Dual-Slot Magazine)】：
+    //   位於手臂基座 ARM_ROOT_X = -0.9 下方的車身內層艙：
+    //   - Slot A (下層好卡槽)：Y = 1.05
+    //   - Slot B (上層壞卡槽)：Y = 1.75
+    // =========================================================================
+    const rackFrameMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.85, roughness: 0.3 });
 
-    const cardOnPlatB = createBareCardMesh(0xe65100, "PC-BAD-01");
-    cardOnPlatB.position.set(0, 0.2, 0);
-    cardOnPlatB.visible = false;
-    agvPlatformB.add(cardOnPlatB);
+    // 槽位導軌與支撐托板
+    const rackShelfA = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.08, 3.3), rackFrameMat);
+    rackShelfA.position.set(ARM_ROOT_X, 0.95, 0);
+    agvVehicle.add(rackShelfA);
 
-    // 經典 KUKA LBR iiwa 白橘 7 軸手臂 (安裝在 X = 2.0)
+    const rackShelfB = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.08, 3.3), rackFrameMat);
+    rackShelfB.position.set(ARM_ROOT_X, 1.65, 0);
+    agvVehicle.add(rackShelfB);
+
+    // 槽位側壁導引滑軌
+    [-1.7, 1.7].forEach(sz => {
+      const railA = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.06, 0.06), new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.9 }));
+      railA.position.set(ARM_ROOT_X, 1.08, sz);
+      agvVehicle.add(railA);
+
+      const railB = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.06, 0.06), new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.9 }));
+      railB.position.set(ARM_ROOT_X, 1.78, sz);
+      agvVehicle.add(railB);
+    });
+
+    // 槽位內部實體卡片 (平常收納於手臂下方內層艙)
+    const cardInSlotA = createBareCardMesh(0x16a34a, "PC-SLOT-A-GOOD");
+    cardInSlotA.position.set(ARM_ROOT_X, 1.05, 0);
+    cardInSlotA.visible = false;
+    agvVehicle.add(cardInSlotA);
+
+    const cardInSlotB = createBareCardMesh(0xe65100, "PC-SLOT-B-BAD");
+    cardInSlotB.position.set(ARM_ROOT_X, 1.75, 0);
+    cardInSlotB.visible = false;
+    agvVehicle.add(cardInSlotB);
+
+    // 狀態變數
+    let topStage_loaded = false;
+    let topCardColor = 0x16a34a;
+    let slotA_loaded = false;
+    let slotB_loaded = false;
+
+    // =========================================================================
+    // ★【SWAP 專屬梭動切換機構】：下沉到槽位高度 ➔ 水平橫移推入/推出槽位
+    // =========================================================================
+    async function shuttleCardIntoSlot(targetSlot = 'A', cardColor = 0x16a34a) {
+      const targetY = (targetSlot === 'A') ? 1.05 : 1.75;
+      log(`[SWAP-SHUTTLE] 車頂進出工位載卡【垂直下沉】至 Slot ${targetSlot} 槽位高度...`, 'log-cyan');
+      // 1. 垂直下沉
+      await lerpVector3(agvElevatorStage, new THREE.Vector3(1.9, targetY - 0.2, 0.0), 600);
+
+      // 2. 水平橫移進槽 (自 X = 1.9 平移進入手臂下方 ARM_ROOT_X = -0.9)
+      log(`[SWAP-SHUTTLE] 梭動推移機構啟動，將卡片【水平橫移】推入手臂下方 Slot ${targetSlot} 槽位！`, 'log-cyan');
+      const shiftDist = 1.9 - ARM_ROOT_X; // 2.8 單位
+      await lerpVector3(cardOnTopStage, new THREE.Vector3(-shiftDist, 0.2, 0.0), 650);
+
+      // 卡片轉移至槽位固定
+      if (targetSlot === 'A') {
+        cardInSlotA.visible = true;
+        cardInSlotA.children[0].material.color.setHex(cardColor);
+        slotA_loaded = true;
+      } else {
+        cardInSlotB.visible = true;
+        cardInSlotB.children[0].material.color.setHex(cardColor);
+        slotB_loaded = true;
+      }
+      cardOnTopStage.visible = false;
+      cardOnTopStage.position.set(0, 0.2, 0);
+      topStage_loaded = false;
+
+      // 3. 升降工位垂直上升回車頂空台 (Y = 2.8)
+      log('[SWAP-SHUTTLE] 車頂進出工位空台【垂直上升】回車頂待命！', 'log-green');
+      await lerpVector3(agvElevatorStage, new THREE.Vector3(1.9, 2.8, 0.0), 500);
+      syncUI();
+    }
+
+    async function shuttleCardOutOfSlot(fromSlot = 'A', cardColor = 0x16a34a) {
+      const targetY = (fromSlot === 'A') ? 1.05 : 1.75;
+      log(`[SWAP-SHUTTLE] 車頂空工位【垂直下沉】至 Slot ${fromSlot} 槽位高度...`, 'log-cyan');
+      // 1. 空台垂直下沉
+      await lerpVector3(agvElevatorStage, new THREE.Vector3(1.9, targetY - 0.2, 0.0), 500);
+
+      // 2. 卡片自槽位水平橫移推出至工位
+      log(`[SWAP-SHUTTLE] Slot ${fromSlot} 槽位卡片【水平橫移推出】至升降工位！`, 'log-cyan');
+      if (fromSlot === 'A') { cardInSlotA.visible = false; slotA_loaded = false; }
+      else { cardInSlotB.visible = false; slotB_loaded = false; }
+
+      cardOnTopStage.children[0].material.color.setHex(cardColor);
+      const shiftDist = 1.9 - ARM_ROOT_X;
+      cardOnTopStage.position.set(-shiftDist, 0.2, 0.0);
+      cardOnTopStage.visible = true;
+      await lerpVector3(cardOnTopStage, new THREE.Vector3(0, 0.2, 0.0), 650);
+      topStage_loaded = true;
+      topCardColor = cardColor;
+
+      // 3. 升降工位載卡垂直上升回車頂 (Y = 2.8)
+      log('[SWAP-SHUTTLE] 升降工位載卡【垂直上升】至車頂進出工位 (Y = 2.8)，供手臂取用！', 'log-green');
+      await lerpVector3(agvElevatorStage, new THREE.Vector3(1.9, 2.8, 0.0), 600);
+      syncUI();
+    }
+
+    // =========================================================================
+    // ★ KUKA LBR iiwa 式【七軸協作手臂 A1 ~ A7】(關節鏈完全依序串接，無額外升降軸)
+    //   A1 底座旋轉(垂直軸) ➔ A2 肩俯仰 ➔ A3 上臂自轉 ➔ A4 肘俯仰 ➔ A5 前臂自轉 ➔ A6 腕俯仰 ➔ A7 法蘭自轉
+    // =========================================================================
+    const armWhite = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.45, roughness: 0.3 });
+    const armOrange = new THREE.MeshStandardMaterial({ color: 0xff5722, metalness: 0.65, roughness: 0.28 });
+    const sideHousing = (r, len) => {            // 沿 X 軸的俯仰關節殼
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 24), armOrange);
+      m.rotation.z = Math.PI / 2;
+      return m;
+    };
+
+    // A1：底座旋轉
     const kukaArmRoot = new THREE.Group();
-    kukaArmRoot.position.set(2.0, 3.5, 0);
+    kukaArmRoot.position.set(ARM_ROOT_X, 3.5, 0);
     agvVehicle.add(kukaArmRoot);
-
-    const armJ1Base = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.75, 0.6, 24), new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.5 }));
+    const armJ1Base = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.75, 0.6, 24), armWhite);
     kukaArmRoot.add(armJ1Base);
 
+    // A2：肩部俯仰
     const shoulderPivot = new THREE.Group();
     shoulderPivot.position.set(0, 0.4, 0);
     kukaArmRoot.add(shoulderPivot);
+    shoulderPivot.add(sideHousing(0.52, 1.0));
+    const upperLink0 = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.8, 0.52), armWhite);
+    upperLink0.position.set(0, 0.5, 0);
+    upperLink0.castShadow = true;
+    shoulderPivot.add(upperLink0);
 
-    const armJ2Orange = new THREE.Mesh(new THREE.SphereGeometry(0.55, 20, 20), new THREE.MeshStandardMaterial({ color: 0xff5722, metalness: 0.6, roughness: 0.3 }));
-    shoulderPivot.add(armJ2Orange);
+    // A3：上臂自轉 (沿上臂軸)
+    const upperRollPivot = new THREE.Group();
+    upperRollPivot.position.set(0, 1.0, 0);
+    shoulderPivot.add(upperRollPivot);
+    const a3Ring = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.2, 24), armOrange);
+    upperRollPivot.add(a3Ring);
+    const upperLink1 = new THREE.Mesh(new THREE.BoxGeometry(0.52, 1.6, 0.52), armWhite);
+    upperLink1.position.set(0, 0.9, 0);
+    upperLink1.castShadow = true;
+    upperRollPivot.add(upperLink1);
 
-    const upperArm = new THREE.Mesh(
-      new THREE.BoxGeometry(0.52, 2.8, 0.52),
-      new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.45, roughness: 0.3 })
-    );
-    upperArm.position.set(0, 1.4, 0);
-    upperArm.castShadow = true;
-    shoulderPivot.add(upperArm);
-
-    // ★【大臂與小臂間緊鄰雙關節機構 (Dual-Axis Elbow Mechanism)】
-    // 關節 1：大臂頂端旋轉/偏擺關節 (Elbow Swivel/Yaw Joint) - 允許小臂側向偏擺轉向
-    const elbowSwivelPivot = new THREE.Group();
-    elbowSwivelPivot.position.set(0, 2.8, 0);
-    shoulderPivot.add(elbowSwivelPivot);
-
-    const elbowSwivelRing = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.48, 0.48, 0.16, 24),
-      new THREE.MeshStandardMaterial({ color: 0xff5722, metalness: 0.7, roughness: 0.25 })
-    );
-    elbowSwivelRing.position.set(0, -0.08, 0);
-    elbowSwivelPivot.add(elbowSwivelRing);
-
-    // 關節 2：緊鄰之肘部俯仰屈伸關節 (Elbow Pitch Joint) - 經典橘色大球體關節，控制小臂前後屈伸
+    // A4：肘部俯仰
     const elbowPivot = new THREE.Group();
-    elbowPivot.position.set(0, 0, 0);
-    elbowSwivelPivot.add(elbowPivot);
+    elbowPivot.position.set(0, 1.8, 0);
+    upperRollPivot.add(elbowPivot);
+    elbowPivot.add(sideHousing(0.5, 0.95));
+    const foreLink0 = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.8, 0.46), armWhite);
+    foreLink0.position.set(0, 0.5, 0);
+    foreLink0.castShadow = true;
+    elbowPivot.add(foreLink0);
 
-    const armJ3Orange = new THREE.Mesh(new THREE.SphereGeometry(0.50, 20, 20), new THREE.MeshStandardMaterial({ color: 0xff5722, metalness: 0.6, roughness: 0.3 }));
-    elbowPivot.add(armJ3Orange);
+    // A5：前臂自轉 (沿前臂軸)
+    const forearmRollPivot = new THREE.Group();
+    forearmRollPivot.position.set(0, 1.1, 0);
+    elbowPivot.add(forearmRollPivot);
+    const a5Ring = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.18, 24), armOrange);
+    forearmRollPivot.add(a5Ring);
+    const foreLink1 = new THREE.Mesh(new THREE.BoxGeometry(0.46, 1.2, 0.46), armWhite);
+    foreLink1.position.set(0, 0.75, 0);
+    foreLink1.castShadow = true;
+    forearmRollPivot.add(foreLink1);
 
-    const foreArm = new THREE.Mesh(
-      new THREE.BoxGeometry(0.46, 2.6, 0.46),
-      new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.45, roughness: 0.3 })
-    );
-    foreArm.position.set(0, 1.3, 0);
-    foreArm.castShadow = true;
-    elbowPivot.add(foreArm);
-
+    // A6：腕部俯仰
     const wristPivot = new THREE.Group();
-    wristPivot.position.set(0, 2.6, 0);
-    elbowPivot.add(wristPivot);
+    wristPivot.position.set(0, 1.5, 0);
+    forearmRollPivot.add(wristPivot);
+    wristPivot.add(sideHousing(0.4, 0.8));
 
-    // ★【手腕緊鄰雙關節機構 (Dual-Axis Close Wrist: Pitch + Yaw/Swivel)】
-    // 關節 A：腕部俯仰關節 (橘球)
-    const armJ5Orange = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 20), new THREE.MeshStandardMaterial({ color: 0xff5722, metalness: 0.6, roughness: 0.3 }));
-    wristPivot.add(armJ5Orange);
-
-    // 關節 B：緊鄰偏航旋轉環 (橘色金屬旋轉軸環)
-    const wristSwivel = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.38, 0.38, 0.14, 24),
-      new THREE.MeshStandardMaterial({ color: 0xff5722, metalness: 0.7, roughness: 0.25 })
-    );
-    wristSwivel.position.y = -0.15;
-    wristPivot.add(wristSwivel);
-
-    // ★【較短的第三節短臂節 (Wrist Link 3 - 長度 0.95)】：精準還原照片，引導夾爪隨時保持 100% 筆直垂直向下！
-    const wristLink3 = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.32, 0.36, 0.95, 24),
-      new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.45, roughness: 0.3 })
-    );
+    const wristLink3 = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.36, 0.95, 24), armWhite);
     wristLink3.position.y = -0.55;
     wristLink3.castShadow = true;
     wristPivot.add(wristLink3);
 
-    // 第三節頂部橘色裝飾環 (還原原廠外觀)
-    const wristCollar = new THREE.Mesh(
-      new THREE.TorusGeometry(0.34, 0.05, 12, 24),
-      new THREE.MeshStandardMaterial({ color: 0xff5722, metalness: 0.6 })
-    );
+    const wristCollar = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.05, 12, 24), armOrange);
     wristCollar.rotation.x = Math.PI / 2;
-    wristCollar.position.y = -0.06;
+    wristCollar.position.y = -0.1;
     wristPivot.add(wristCollar);
 
     // ★【末端工具圓盤與四向夾爪機構】：安裝於第三節短臂最底端 (Y = -0.95)
+    // A7：法蘭自轉 (kukaGripper 即為 A7 之旋轉群組)
     const kukaGripper = new THREE.Group();
     kukaGripper.position.set(0, -0.95, 0);
     wristPivot.add(kukaGripper);
@@ -1998,13 +2103,148 @@
     }
     setGripperClawState('OPEN', 10);
 
+    // =========================================================================
+    // ★ 七軸臂運動學 (A1 旋轉 + A2/A4/A6 俯仰在垂直平面內解 IK；A3/A5 自轉保持 0，A7 補償使夾爪姿態固定)
+    //   末端以「圓柱座標 (A1 角、半徑 r、高度 y)」插值：
+    //   - 純垂直動作：r 與 A1 不變 → 真・筆直上下
+    //   - 水平動作：高度不變，A1 旋轉 + 半徑收放 → 真・等高水平移動
+    //   - 夾爪恆垂直向下，卡片全程水平；不使用任何額外升降軸
+    // =========================================================================
+    const ARM = { L1: 2.8, L2: 2.6, rootX: ARM_ROOT_X, rootY: 3.5, shoulderOff: 0.4,
+                  toolDrop: 0.95 + 0.42, carryClear: 0.9, swingR: 3.1,
+                  restYaw: -Math.PI / 2, a1Limit: 170 * Math.PI / 180 };
+
+    let armState = { a1: 0, r: 1.67, y: 5.9 };
+
+    function solveArm(a1, r, y) {
+      a1 = Math.max(-ARM.a1Limit, Math.min(ARM.a1Limit, a1));
+      const wy = y + ARM.toolDrop;
+      const h = wy - (ARM.rootY + ARM.shoulderOff);
+      let D = Math.hypot(r, h);
+      const Dmin = Math.abs(ARM.L1 - ARM.L2) + 0.1, Dmax = ARM.L1 + ARM.L2 - 0.05;
+      const Dc = Math.min(Math.max(D, Dmin), Dmax);
+      const k = D > 1e-6 ? Dc / D : 1;
+      const rr = r * k, hh = h * k;
+      const c2 = (Dc * Dc - ARM.L1 * ARM.L1 - ARM.L2 * ARM.L2) / (2 * ARM.L1 * ARM.L2);
+      const th2 = Math.acos(Math.max(-1, Math.min(1, c2)));     // 肘部朝上 (天鵝頸構型)
+      const th1 = Math.atan2(rr, hh) - Math.atan2(ARM.L2 * Math.sin(th2), ARM.L1 + ARM.L2 * Math.cos(th2));
+      kukaArmRoot.rotation.y = ARM.restYaw + a1;                 // A1
+      shoulderPivot.rotation.x = th1;                            // A2
+      upperRollPivot.rotation.y = 0;                             // A3
+      elbowPivot.rotation.x = th2;                               // A4
+      forearmRollPivot.rotation.y = 0;                           // A5
+      wristPivot.rotation.x = -(th1 + th2);                      // A6 (補償：夾爪恆垂直向下)
+      kukaGripper.rotation.y = -a1;                              // A7 (補償：夾爪方位固定)
+      const el = document.getElementById('joint-readout');
+      if (el) {
+        const d = v => (v * 180 / Math.PI).toFixed(0).padStart(4, ' ');
+        el.textContent = `A1${d(a1)}° A2${d(th1)}° A3${d(0)}° A4${d(th2)}°\nA5${d(0)}° A6${d(-(th1 + th2))}° A7${d(-a1)}°`;
+      }
+    }
+
     function setKukaRestPose() {
-      kukaArmRoot.rotation.y = -Math.PI / 2; // 常態微朝前
-      shoulderPivot.rotation.x = -0.30;
-      elbowPivot.rotation.x = 1.60;
-      wristPivot.rotation.x = -1.30;
+      armState = { a1: 0, r: 1.67, y: 5.9 };
+      solveArm(armState.a1, armState.r, armState.y);
     }
     setKukaRestPose();
+    const KUKA_REST = { a1: 0, r: 1.67, y: 5.9 };
+
+    // 末端圓柱座標插值移動
+    function armMoveTo(target, duration = 600) {
+      return new Promise(res => {
+        const s0 = { ...armState };
+        const st = performance.now();
+        function step() {
+          const p = Math.min((performance.now() - st) / duration, 1);
+          const e = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+          const cur = {
+            a1: s0.a1 + (target.a1 - s0.a1) * e,
+            r: s0.r + (target.r - s0.r) * e,
+            y: s0.y + (target.y - s0.y) * e
+          };
+          solveArm(cur.a1, cur.r, cur.y);
+          armState = cur;
+          if (p < 1) requestAnimationFrame(step);
+          else { armState = { ...target }; res(); }
+        }
+        step();
+      });
+    }
+
+    // 車體座標 ➔ 手臂圓柱座標
+    const carLocal = (w) => { agvVehicle.updateMatrixWorld(true); return agvVehicle.worldToLocal(w.clone()); };
+    function toCyl(l) {
+      const dx = l.x - ARM.rootX, dz = l.z;
+      let a = Math.atan2(dx, dz) - ARM.restYaw;
+      a = Math.atan2(Math.sin(a), Math.cos(a));
+      return { a1: a, r: Math.hypot(dx, dz), y: l.y };
+    }
+
+    // 取放點 (皆以車體座標表示)
+    // ★ 車頂唯一的單一進出工位 (置中 X = 1.9, Z = 0.0)
+    const topIoPos = () => new THREE.Vector3(1.9, 3.0, 0.0);
+    const portBCardPos = () => carLocal(bareCardOnPortB.position);
+    const proberStagePos = (pr) => {
+      const w = pr.group.position.clone().add(pr.pccStageGroup.position);
+      w.y += 0.35;
+      return carLocal(w);
+    };
+
+    // ★ 標準取放：升至安全高度對位 ➔ 純垂直下探 ➔ 夾緊 ➔ 純垂直抬起 ➔ 收半徑 + A1 等高水平搬運 ➔ 純垂直下放 ➔ 釋放 ➔ 回 Home
+    async function kukaTransfer(getSrc, getDst, opts = {}) {
+      const sl = getSrc(), dl = getDst();
+      const s = toCyl(sl), d = toCyl(dl);
+      const tag = opts.tag || 'MR';
+      const cy = Math.max(sl.y, dl.y) + ARM.carryClear;
+      const hex = (opts.color !== undefined) ? opts.color : 0x16a34a;
+      const swS = Math.min(s.r, ARM.swingR), swD = Math.min(d.r, ARM.swingR);
+
+      await setGripperClawState('OPEN', 100);
+      log(`[${tag}-1] A1 旋轉對位，末端移至取卡點正上方安全高度`, 'log-cyan');
+      await armMoveTo({ a1: s.a1, r: s.r, y: cy }, 800);
+
+      log(`[${tag}-2] ★ 純垂直下探 (A2/A4/A6 以 IK 同步，夾爪恆垂直)，四爪合緊`, 'log-cyan');
+      await armMoveTo({ a1: s.a1, r: s.r, y: s.y }, 600);
+      await setGripperClawState('CLAMP', 250);
+      cardOnGripper.visible = true;
+      cardOnGripper.children[0].material.color.setHex(hex);
+      if (opts.onGrab) opts.onGrab();
+
+      log(`[${tag}-3] ★ 純垂直抬起：卡片筆直拔出，全程水平`, 'log-cyan');
+      await armMoveTo({ a1: s.a1, r: s.r, y: cy }, 500);
+
+      log(`[${tag}-4] ★ 等高水平搬運：先收回半徑，再以 A1 旋轉繞過，絕不穿越機台/門板/置放區`, 'log-cyan');
+      await armMoveTo({ a1: s.a1, r: swS, y: cy }, 450);
+      await armMoveTo({ a1: d.a1, r: swD, y: cy }, 1000);
+      await armMoveTo({ a1: d.a1, r: d.r, y: cy }, 450);
+
+      log(`[${tag}-5] ★ 純垂直下放：筆直平降安座，夾爪張開釋放`, 'log-green');
+      await armMoveTo({ a1: d.a1, r: d.r, y: dl.y }, 600);
+      await setGripperClawState('OPEN', 200);
+      cardOnGripper.visible = false;
+      if (opts.onRelease) opts.onRelease();
+
+      await armMoveTo({ a1: d.a1, r: d.r, y: cy }, 500);
+      await armMoveTo({ ...KUKA_REST }, 800);
+    }
+
+    // 車輛移動 (全向移動平台：位置與朝向同步補間)
+    const AGV_ST = {
+      home:  { x: -6,   z: 12,    rot: 0 },
+      lane:  { x: 0,    z: 12,    rot: 0 },
+      portB: { x: -13.6, z: 13.6, rot: 0 },
+      p1Wait:{ x: 7.0,  z: 5.0,   rot: -Math.PI / 2 },
+      p1Work:{ x: 7.0,  z: -0.55, rot: -Math.PI / 2 },
+      p2Wait:{ x: 29.0, z: 5.0,   rot: -Math.PI / 2 },
+      p2Work:{ x: 29.0, z: -0.55, rot: -Math.PI / 2 }
+    };
+    function agvGo(st, dur = 800, zOverride) {
+      const z = (zOverride !== undefined) ? zOverride : st.z;
+      return Promise.all([
+        lerpVector3(agvVehicle, new THREE.Vector3(st.x, 0, z), dur),
+        lerpRotationY(agvVehicle, st.rot, dur)
+      ]);
+    }
 
     // =========================================================================
     // 10. 狀態機與動畫控制
@@ -2052,22 +2292,22 @@
       cardOnPlatA.visible = cardOnPlatformA_loaded;
       cardOnPlatB.visible = cardOnPlatformB_loaded;
 
-      // 更新車載雙層平台資訊
+// 更新車載單一進出工位與臂下雙槽卡匣狀態
       const deckTopTxt = document.getElementById('deck-top-txt');
-      const deckBotTxt = document.getElementById('deck-bot-txt');
-      document.getElementById('deck-top-lbl').textContent = t.deckTop;
-      document.getElementById('deck-bot-lbl').textContent = t.deckBottom;
+      const slotATxt = document.getElementById('deck-slot-a-txt');
+      const slotBTxt = document.getElementById('deck-slot-b-txt');
 
-      if (activeDeckAtTop === 'A') {
-        deckTopTxt.textContent = cardOnPlatformA_loaded ? t.goodTxt : t.emptyTxt;
-        deckTopTxt.style.color = cardOnPlatformA_loaded ? 'var(--green)' : 'var(--text-muted)';
-        deckBotTxt.textContent = cardOnPlatformB_loaded ? t.badTxt : t.emptyTxt;
-        deckBotTxt.style.color = cardOnPlatformB_loaded ? 'var(--orange)' : 'var(--text-muted)';
-      } else {
-        deckTopTxt.textContent = cardOnPlatformB_loaded ? t.badTxt : t.emptyTxt;
-        deckTopTxt.style.color = cardOnPlatformB_loaded ? 'var(--orange)' : 'var(--text-muted)';
-        deckBotTxt.textContent = cardOnPlatformA_loaded ? t.goodTxt : t.emptyTxt;
-        deckBotTxt.style.color = cardOnPlatformA_loaded ? 'var(--green)' : 'var(--text-muted)';
+      if (deckTopTxt) {
+        deckTopTxt.textContent = topStage_loaded ? ((topCardColor === 0x16a34a) ? t.goodTxt : t.badTxt) : t.emptyTxt;
+        deckTopTxt.style.color = topStage_loaded ? ((topCardColor === 0x16a34a) ? 'var(--green)' : 'var(--orange)') : 'var(--text-muted)';
+      }
+      if (slotATxt) {
+        slotATxt.textContent = slotA_loaded ? t.goodTxt : t.emptyTxt;
+        slotATxt.style.color = slotA_loaded ? 'var(--green)' : 'var(--text-muted)';
+      }
+      if (slotBTxt) {
+        slotBTxt.textContent = slotB_loaded ? t.badTxt : t.emptyTxt;
+        slotBTxt.style.color = slotB_loaded ? 'var(--orange)' : 'var(--text-muted)';
       }
 
       // Prober 狀態卡
@@ -2210,68 +2450,6 @@
       });
     }
 
-    function setKukaArmPose(baseRot, shoulderRotX, elbowRotX, wristRotX, duration = 450, elbowYaw = 0) {
-      return new Promise(res => {
-        const st = performance.now();
-        const sJ1 = kukaArmRoot.rotation.y;
-        const sJ2 = shoulderPivot.rotation.x;
-        const sJ3 = elbowPivot.rotation.x;
-        const sJ4 = wristPivot.rotation.x;
-        const sJ_ey = elbowSwivelPivot.rotation.y;
-        const targetJ4 = (wristRotX !== undefined && wristRotX !== null) ? wristRotX : -(shoulderRotX + elbowRotX);
-
-        function update() {
-          const now = performance.now();
-          const p = Math.min((now - st) / duration, 1);
-          const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
-
-          kukaArmRoot.rotation.y = sJ1 + (baseRot - sJ1) * ease;
-          shoulderPivot.rotation.x = sJ2 + (shoulderRotX - sJ2) * ease;
-          elbowPivot.rotation.x = sJ3 + (elbowRotX - sJ3) * ease;
-          wristPivot.rotation.x = sJ4 + (targetJ4 - sJ4) * ease;
-          elbowSwivelPivot.rotation.y = sJ_ey + (elbowYaw - sJ_ey) * ease;
-
-          if (p < 1) requestAnimationFrame(update);
-          else res();
-        }
-        update();
-      });
-    }
-
-    // ★【兩段階梯式取放動作】：先旋轉對位 ➔ 再伸長大臂小臂取卡 (第三節短臂自動補償垂直朝下)
-    async function setKukaArmTwoStage(baseRot, shoulderRotX, elbowRotX, durationRot = 400, durationExtend = 450, elbowYaw = 0) {
-      // 第一段：手臂維持小幅度姿態，基座 J1 率先獨立轉向對位 (先轉向)
-      const curJ2 = shoulderPivot.rotation.x;
-      const curJ3 = elbowPivot.rotation.x;
-      const curJ4 = wristPivot.rotation.x;
-      await setKukaArmPose(baseRot, curJ2, curJ3, curJ4, durationRot, elbowYaw);
-
-      // 第二段：大臂小臂向前伸長展開 (然後伸長)，第三節自動計算反向補償角保持 100% 筆直垂直向下
-      const targetJ4 = -(shoulderRotX + elbowRotX);
-      await setKukaArmPose(baseRot, shoulderRotX, elbowRotX, targetJ4, durationExtend, elbowYaw);
-    }
-
-    // ★ 車載雙平台「下沉內縮 ＋ 升起切換」動畫
-    async function switchKukaDecks(toDeck = 'B') {
-      log(`[MR-DECK] 車載雙平台切換機構啟動：${activeDeckAtTop} 平台下沉內縮 ➔ ${toDeck} 平台升至頂面！`, 'log-cyan');
-      if (toDeck === 'B') {
-        // Platform A (好卡) 下沉內縮至下層 (X=1.2, Y=1.0)
-        // Platform B (壞卡台) 升起至頂面 (X=-1.2, Y=2.8)
-        const p1 = lerpVector3(agvPlatformA, new THREE.Vector3(1.2, 1.0, 0), 700);
-        const p2 = lerpVector3(agvPlatformB, new THREE.Vector3(-1.2, 2.8, 0), 700);
-        await Promise.all([p1, p2]);
-        activeDeckAtTop = 'B';
-      } else {
-        // Platform B 下沉內縮至下層 (X=1.2, Y=1.0)
-        // Platform A 升起至頂面 (X=-1.2, Y=2.8)
-        const p1 = lerpVector3(agvPlatformB, new THREE.Vector3(1.2, 1.0, 0), 700);
-        const p2 = lerpVector3(agvPlatformA, new THREE.Vector3(-1.2, 2.8, 0), 700);
-        await Promise.all([p1, p2]);
-        activeDeckAtTop = 'A';
-      }
-      syncUI();
-    }
-
         // =========================================================================
     // 流程 A: Prober #01 SWAP 換卡全流程 (解耦非相依 ＋ 避門動線 ＋ 壞卡零瞬移)
     // =========================================================================
@@ -2334,42 +2512,28 @@
 
       // 5. ★【MR 車精準對位停靠】：停靠至 Stocker Port B 正前方黃金工藝位 (X = -14.2)
       log('[A-5] MR 車精準停靠至 Port B 正前方工作位 (X = -14.2)，徹底消除空間距離差！', 'log-orange');
-      await lerpVector3(agvVehicle, new THREE.Vector3(-15.8, 0, 13.6), 700);
+      await agvGo(AGV_ST.portB, 900);
 
-      // ★【標準 4 階段取卡上車 Flow (比照 Stocker 內爪模式)】：
-      // (1) 移到卡正上方 ➔ 垂直下探扣緊
-      log('[A-5-1] 肘部雙關節導引手臂至 Port B 正上方，手爪垂直下探，四爪向內扣緊！', 'log-cyan');
-      await setGripperClawState('OPEN', 100);
-      await setKukaArmTwoStage(-Math.PI / 2, 0.22, 0.82, 380, 420);
-      await setGripperClawState('CLAMP', 250);
-      bareCardOnPortB.visible = false;
-      cardOnGripper.visible = true;
-      cardOnGripper.children[0].material.color.setHex(0x16a34a);
+      // ★【取卡上車】Port B ➔ 車頂單一進出工位 (topIoPos)
+      await kukaTransfer(portBCardPos, topIoPos, {
+        tag: 'A-5', color: 0x16a34a,
+        onGrab: () => { bareCardOnPortB.visible = false; },
+        onRelease: () => {
+          cardOnTopStage.visible = true;
+          cardOnTopStage.children[0].material.color.setHex(0x16a34a);
+          topStage_loaded = true;
+          topCardColor = 0x16a34a;
+          syncUI();
+        }
+      });
 
-      // (2) ★【向上微微垂直抬起】：卡片夾牢後，向上微微垂直抬起約 0.6 單位 (脫出銷點，卡片全程水平)
-      log('[A-5-2] ★【向上微微垂直抬起】卡片垂直微拔向上微抬，卡片全程嚴格水平！', 'log-cyan');
-      await setKukaArmPose(-Math.PI / 2, 0.12, 0.72, -0.84, 350);
-
-      // (3) ★【水平移動到車身放置區上方】：維持微抬高度，平滑水平橫移至車載平台 Platform A 正上方
-      log('[A-5-3] ★【水平移動】維持安全高度，手臂平滑水平平移至車身放置區 (Platform A) 正上方！', 'log-cyan');
-      await setKukaArmPose(-Math.PI / 2, -0.15, 0.95, -0.80, 420);
-
-      // (4) ★【接著再垂直下放】：垂直平降安座於車身載具圓盤，夾爪張開釋放！
-      log('[A-5-4] ★【垂直下放】手爪垂直直線平降，平穩安座於車頂銀白圓盤，夾爪張開釋放！', 'log-green');
-      await setKukaArmPose(-Math.PI / 2, 0.08, 0.78, -0.86, 350);
-      await setGripperClawState('OPEN', 200);
-      cardOnGripper.visible = false;
-      cardOnPlatformA_loaded = true;
-      syncUI();
-      setKukaRestPose();
-
-      // ★【SWAP 任務專屬】：等等要前往 Prober #01 退壞卡，因此執行收卡入內艙 Change！
-      log('[A-6] ★【SWAP 換卡預備】好卡已安座，車載雙平台切換：好卡下沉內縮入下層艙，空 Platform B 升至頂面！', 'log-cyan');
-      await switchKukaDecks('B');
+      // ★【SWAP 任務專屬收卡】：好卡自車頂工位【垂直下沉 ➔ 水平橫移推入】手臂下方 Slot A 槽位收納！
+      log('[A-6] ★【SWAP 準備】好卡下沉至車內下層高度，水平橫移推入手臂下方 Slot A 槽位，車頂工位騰空！', 'log-cyan');
+      await shuttleCardIntoSlot('A', 0x16a34a);
 
       // 6. MR 車出發前往 Prober #01 安全停等區 (避開門板路徑)
-      await lerpVector3(agvVehicle, new THREE.Vector3(4.5, 0, 12), 800);
-      await lerpVector3(agvVehicle, new THREE.Vector3(4.5, 0, 4.0), 700);
+      await agvGo({ x: AGV_ST.p1Wait.x, z: 12, rot: AGV_ST.p1Wait.rot }, 1200);
+      await agvGo(AGV_ST.p1Wait, 800);
 
       // 7. ★ 0.5x 慢動作開門
       log('[A-7] ★ TEL Prexa #01 正面純白門向外旋轉 90 度敞開 (1,600ms)！露出深黑暗室！', 'log-cyan');
@@ -2379,75 +2543,51 @@
       log('[A-8] ★ 雙導軌電動滑台自深黑暗腔內部平滑吐出 (1,600ms)！', 'log-cyan');
       await lerpVector3(prober1.pccStageGroup, new THREE.Vector3(-2.0, 4.0, 5.8), 1600);
 
-      // 9. ★【Prober 停靠工藝位校正 (X = 5.6, Z = -2.6)】：
-      // 車載托盤 (4.4, -2.6) 與機台滑台 (4.5, -4.7) 同軸對齊，間距僅 2.1 單位，徹底消除空間斷裂！
-      log('[A-9] MR 車平穩停靠至機台黃金工藝位 (X = 5.6, Z = -2.6)，同軸完美對齊！', 'log-cyan');
-      await lerpVector3(agvVehicle, new THREE.Vector3(5.8, 0, 0.0), 600);
-      await lerpVector3(agvVehicle, new THREE.Vector3(5.8, 0, -3.5), 600);
+      // 9. ★ MR 車平穩停靠至機台黃金工藝位
+      log('[A-9] MR 車平穩停靠至機台黃金工藝位，車頂進出工位正對手臂安全半徑！', 'log-cyan');
+      await agvGo(AGV_ST.p1Work, 1200);
 
-      // 10. ★【SWAP 動作 A：自機台滑台取退壞卡 (微抬 ➔ 水平平移 ➔ 垂直下放)】：
-      // (1) 移到機台滑台壞卡正上方 ➔ 下探合緊
-      log('[A-10-1] 肘部雙關節導引手臂至滑台正上方，手爪垂直下探，四爪合緊扣牢壞卡！', 'log-orange');
-      await setGripperClawState('OPEN', 100);
-      await setKukaArmTwoStage(-1.92, 0.24, 0.85, 380, 420);
-      await setGripperClawState('CLAMP', 250);
-      prober1.installedCard.visible = false;
-      cardOnGripper.visible = true;
-      cardOnGripper.children[0].material.color.setHex(0xe65100);
+      // 10. ★【SWAP 動作 A：機台滑台壞卡 ➔ 車頂單一進出工位】
+      log('[A-10] 手臂取下機台滑台【壞卡】，安座於車頂進出工位...', 'log-orange');
+      await kukaTransfer(() => proberStagePos(prober1), topIoPos, {
+        tag: 'A-10', color: 0xe65100,
+        onGrab: () => { prober1.installedCard.visible = false; },
+        onRelease: () => {
+          cardOnTopStage.visible = true;
+          cardOnTopStage.children[0].material.color.setHex(0xe65100);
+          topStage_loaded = true;
+          topCardColor = 0xe65100;
+          syncUI();
+        }
+      });
 
-      // (2) ★【向上微微垂直抬起】
-      log('[A-10-2] ★【向上微微垂直抬起】壞卡垂直拔起微抬，卡片全程保持絕對水平！', 'log-orange');
-      await setKukaArmPose(-1.92, 0.14, 0.75, -0.89, 350);
+      // 壞卡【垂直下沉 ➔ 水平橫移推入】手臂下方 Slot B 壞卡槽！
+      log('[A-10-2] 壞卡下沉至車內上層高度，水平橫移推入手臂下方 Slot B 壞卡槽！', 'log-orange');
+      await shuttleCardIntoSlot('B', 0xe65100);
 
-      // (3) ★【水平移動到車身放置區上方】
-      log('[A-10-3] ★【水平移動】手臂帶動壞卡水平平移至車頂 Platform B 正上方！', 'log-orange');
-      await setKukaArmPose(-Math.PI / 2, -0.15, 0.95, -0.80, 420);
+      // Slot A 好卡【水平橫移推出 ➔ 垂直上升】至車頂進出工位！
+      log('[A-11-1] Slot A 好卡水平橫移推出，垂直上升至車頂進出工位，準備裝機！', 'log-green');
+      await shuttleCardOutOfSlot('A', 0x16a34a);
 
-      // (4) ★【接著再垂直下放】
-      log('[A-10-4] ★【垂直下放】垂直直線平降，平穩安座於車載壞卡台，夾爪張開釋放！', 'log-green');
-      await setKukaArmPose(-Math.PI / 2, 0.08, 0.78, -0.86, 350);
-      await setGripperClawState('OPEN', 200);
-      cardOnGripper.visible = false;
-      cardOnPlatformB_loaded = true;
-      syncUI();
-      setKukaRestPose();
-
-      // ★ 車內升降切換：載壞卡的 Platform B 下沉，載好卡的 Platform A 升至頂面！
-      log('[A-10-5] 車載雙平台切換：壞卡下沉，好卡升至頂面就位！', 'log-cyan');
-      await switchKukaDecks('A');
-
-      // ★【SWAP 動作 B：自車上取好卡裝上機台滑台 (微抬 ➔ 水平平移 ➔ 垂直下放)】：
-      // (1) 移至車上 Platform A 好卡正上方 ➔ 下探合緊
-      log('[A-11-1] 手爪對準車頂 Platform A 正上方垂直下探，向內扣緊好卡！', 'log-green');
-      await setGripperClawState('OPEN', 100);
-      await setKukaArmPose(-Math.PI / 2, 0.08, 0.78, -0.86, 350);
-      await setGripperClawState('CLAMP', 250);
-      cardOnPlatformA_loaded = false;
-      syncUI();
-      cardOnGripper.visible = true;
-      cardOnGripper.children[0].material.color.setHex(0x16a34a);
-
-      // (2) ★【向上微微垂直抬起】
-      log('[A-11-2] ★【向上微微垂直抬起】好卡垂直微拔向上微抬至安全高度！', 'log-green');
-      await setKukaArmPose(-Math.PI / 2, -0.15, 0.95, -0.80, 350);
-
-      // (3) ★【水平移動到機台滑台上方】
-      log('[A-11-3] ★【水平移動】手臂帶好卡平滑水平平移至機台滑台正上方！', 'log-green');
-      await setKukaArmPose(-1.92, 0.14, 0.75, -0.89, 420);
-
-      // (4) ★【接著再垂直下放】
-      log('[A-11-4] ★【垂直下放】垂直直線平降安座於機台滑台定位銷，夾爪張開釋放！', 'log-green');
-      await setKukaArmPose(-1.92, 0.24, 0.85, -1.09, 350);
-      await setGripperClawState('OPEN', 200);
-      cardOnGripper.visible = false;
-      prober1.installedCard.visible = true;
-      prober1.installedCard.children[0].material.color.setHex(0x16a34a);
-      setKukaRestPose();
+      // ★【SWAP 動作 B：車頂單一進出工位好卡 ➔ 安裝至機台滑台】
+      log('[A-11-2] 手臂自車頂進出工位取好卡，精準安裝至 Prober #01 機台滑台！', 'log-green');
+      await kukaTransfer(topIoPos, () => proberStagePos(prober1), {
+        tag: 'A-11', color: 0x16a34a,
+        onGrab: () => {
+          cardOnTopStage.visible = false;
+          topStage_loaded = false;
+          syncUI();
+        },
+        onRelease: () => {
+          prober1.installedCard.visible = true;
+          prober1.installedCard.children[0].material.color.setHex(0x16a34a);
+        }
+      });
 
       // 11. 滑台縮回深黑暗室，MR 車倒退避讓，白門閉合轉綠
       log('[A-12] 滑台縮回深黑暗室 (1,600ms)，MR 車倒退避讓，白門閉合！轉綠燈！', 'log-cyan');
       const retractStagePromise = lerpVector3(prober1.pccStageGroup, new THREE.Vector3(-2.0, 4.0, 0.5), 1600);
-      await lerpVector3(agvVehicle, new THREE.Vector3(5.8, 0, 4.0), 800);
+      await agvGo(AGV_ST.p1Wait, 800);
       await retractStagePromise;
       await lerpRotationY(prober1.doorHingePivot, 0, 1400);
 
@@ -2458,38 +2598,27 @@
       log('★【雙系統非相依平行運作】：OHT 天車直降派送 FOUP 1 ｜ MR 車同時載壞卡返航！', 'log-green');
       const ohtDeliveryPromise = runOhtDeliveryToProber(prober1, foup1, 6.5 + 2.8, "Prober #01");
 
-      // MR 車切換壞卡平台 B 至頂面，返航 PC Stocker 黃金對位點 (X = -14.2)
-      await switchKukaDecks('B');
-      log('[A-13] MR 車載著壞卡返航 PC Stocker 出入口工作位 (X = -14.2)...', 'log-orange');
-      await lerpVector3(agvVehicle, new THREE.Vector3(-15.8, 0, 13.6), 1100);
+      log('[A-13] MR 車載著壞卡返航 PC Stocker 出入口工作位 (Port B 旁，不進入平台正下方)...', 'log-orange');
+      await agvGo(AGV_ST.lane, 900, 12);
+      await agvGo(AGV_ST.portB, 900);
 
-      // 13. ★【退壞卡至 Port B (微抬 ➔ 水平平移 ➔ 垂直下放)】：
-      // (1) 移至車上 Platform B 壞卡正上方 ➔ 下探合緊
-      log('[A-14-1] 手爪對準車頂 Platform B 壞卡正上方下探，向內扣緊壞卡！', 'log-cyan');
-      await setGripperClawState('OPEN', 100);
-      await setKukaArmPose(-Math.PI / 2, 0.08, 0.78, -0.86, 350);
-      await setGripperClawState('CLAMP', 250);
-      cardOnPlatformB_loaded = false;
-      syncUI();
-      cardOnGripper.visible = true;
-      cardOnGripper.children[0].material.color.setHex(0xe65100);
+      // 13. ★【退壞卡：Slot B 壞卡推出升至頂部 ➔ 手臂夾退至 Port B】
+      log('[A-14-1] Slot B 壞卡水平橫移推出，垂直上升至車頂進出工位！', 'log-orange');
+      await shuttleCardOutOfSlot('B', 0xe65100);
 
-      // (2) ★【向上微微垂直抬起】
-      log('[A-14-2] ★【向上微微垂直抬起】壞卡垂直微抬至安全高度！', 'log-cyan');
-      await setKukaArmPose(-Math.PI / 2, -0.15, 0.95, -0.80, 350);
-
-      // (3) ★【水平移動到 Port B 正上方】
-      log('[A-14-3] ★【水平移動】手臂帶動壞卡水平平移至 Port B 出入口正上方！', 'log-cyan');
-      await setKukaArmPose(-Math.PI / 2, 0.12, 0.72, -0.84, 420);
-
-      // (4) ★【接著再垂直下放】
-      log('[A-14-4] ★【垂直下放】垂直直線平降安座於 Port B 出入口，夾爪張開釋放！', 'log-cyan');
-      await setKukaArmPose(-Math.PI / 2, 0.22, 0.82, -1.04, 350);
-      await setGripperClawState('OPEN', 200);
-      bareCardOnPortB.visible = true;
-      bareCardOnPortB.children[0].material.color.setHex(0xe65100);
-      cardOnGripper.visible = false;
-      setKukaRestPose();
+      log('[A-14-2] 手臂自車頂進出工位夾取壞卡，平移放至 Stocker Port B 出入口！', 'log-cyan');
+      await kukaTransfer(topIoPos, portBCardPos, {
+        tag: 'A-14', color: 0xe65100,
+        onGrab: () => {
+          cardOnTopStage.visible = false;
+          topStage_loaded = false;
+          syncUI();
+        },
+        onRelease: () => {
+          bareCardOnPortB.visible = true;
+          bareCardOnPortB.children[0].material.color.setHex(0xe65100);
+        }
+      });
 
       // 14. Stocker 內爪收壞卡入箱
       log('[A-15] 壞卡就位入口！Stocker 取 Slot 05 空箱下降定位，內爪夾卡進箱...', 'log-cyan');
@@ -2529,7 +2658,7 @@
       slotMeshList[4].userData.ledMesh.material.color.setHex(0xff334b);
 
       await lerpVector3(elevatorCarriage, new THREE.Vector3(0, 3.7, 1.6), 600);
-      await lerpVector3(agvVehicle, new THREE.Vector3(-6, 0, 12), 600);
+      await agvGo(AGV_ST.home, 1000);
 
       await ohtDeliveryPromise;
 
@@ -2599,38 +2728,25 @@
 
       // 4. MR 車精準對位停靠至 Port B 正前方工作位 (X = -14.2)
       log('[B-5] MR 車精準停靠至 Port B 工作位 (X = -14.2)，手臂就近取卡！', 'log-orange');
-      await lerpVector3(agvVehicle, new THREE.Vector3(-15.8, 0, 13.6), 700);
+      await agvGo(AGV_ST.portB, 900);
 
-      // ★ 取好卡上車 (微抬 ➔ 水平平移 ➔ 垂直下放)
-      log('[B-5-1] 肘部雙關節導引手臂至 Port B 好卡正上方下探，四爪合緊扣牢！', 'log-orange');
-      await setGripperClawState('OPEN', 100);
-      await setKukaArmTwoStage(-Math.PI / 2, 0.22, 0.82, 380, 420);
-      await setGripperClawState('CLAMP', 250);
-      bareCardOnPortB.visible = false;
-      cardOnGripper.visible = true;
-      cardOnGripper.children[0].material.color.setHex(0x16a34a);
+      // ★ 取好卡上車：Port B ➔ 車頂單一進出工位 (topIoPos)
+      await kukaTransfer(portBCardPos, topIoPos, {
+        tag: 'B-5', color: 0x16a34a,
+        onGrab: () => { bareCardOnPortB.visible = false; },
+        onRelease: () => {
+          cardOnTopStage.visible = true;
+          cardOnTopStage.children[0].material.color.setHex(0x16a34a);
+          topStage_loaded = true;
+          topCardColor = 0x16a34a;
+          syncUI();
+        }
+      });
 
-      // ★ 向上微微垂直抬起
-      log('[B-5-2] ★【向上微微垂直抬起】好卡垂直微拔向上微抬，卡片全程嚴格水平！', 'log-orange');
-      await setKukaArmPose(-Math.PI / 2, 0.12, 0.72, -0.84, 350);
-
-      // ★ 水平平移至車上 Platform A
-      log('[B-5-3] ★【水平移動】維持安全高度，手臂平滑水平平移至車身頂部 Platform A 正上方！', 'log-orange');
-      await setKukaArmPose(-Math.PI / 2, -0.15, 0.95, -0.80, 420);
-
-      // ★ 接著再垂直下放
-      log('[B-5-4] ★【垂直下放】手爪垂直直線平降，平穩安座於車載平台，夾爪張開釋放！', 'log-green');
-      await setKukaArmPose(-Math.PI / 2, 0.08, 0.78, -0.86, 350);
-      await setGripperClawState('OPEN', 200);
-      cardOnGripper.visible = false;
-      cardOnPlatformA_loaded = true;
-      syncUI();
-      setKukaRestPose();
-
-      // ★【非 SWAP 任務：卡片直接 Keep 在車頂上方 (Platform A)，不執行下沉內縮！】
-      log('[B-6] ★【非 SWAP 任務】好卡直接 Keep 在車頂上方 (Platform A)，MR 車啟動行駛前往 Prober #02...', 'log-cyan');
-      await lerpVector3(agvVehicle, new THREE.Vector3(26.5, 0, 12), 1100);
-      await lerpVector3(agvVehicle, new THREE.Vector3(26.5, 0, 4.0), 800);
+      // ★【非 SWAP 任務：卡片直接 Keep 在車頂進出工位，不執行下沉與橫移！】
+      log('[B-6] 非 SWAP 任務：好卡維持 Keep 在車頂進出工位，MR 車啟動行駛前往 Prober #02...', 'log-cyan');
+      await agvGo({ x: AGV_ST.p2Wait.x, z: 12, rot: AGV_ST.p2Wait.rot }, 1500);
+      await agvGo(AGV_ST.p2Wait, 800);
 
       // 6. 0.5x 慢動作開門
       log('[B-7] Prober #02 正面純白門向外旋轉 90 度敞開 (1,600ms)！露出內部深黑暗室！', 'log-cyan');
@@ -2640,50 +2756,35 @@
       log('[B-8] 光碟機式空滑台自深黑暗腔平滑吐出 (1,600ms)！', 'log-cyan');
       await lerpVector3(prober2.pccStageGroup, new THREE.Vector3(-2.0, 4.0, 5.8), 1600);
 
-      // 8. ★【Prober #02 停靠工藝位校正 (X = 27.6, Z = -2.6)】：同軸完美對齊！
-      log('[B-9] MR 車平穩停靠至機台黃金工藝位 (X = 27.6, Z = -2.6)，完全消除空間斷裂！', 'log-green');
-      await lerpVector3(agvVehicle, new THREE.Vector3(27.8, 0, 0.0), 600);
-      await lerpVector3(agvVehicle, new THREE.Vector3(27.8, 0, -3.5), 600);
+      // 8. MR 車平穩停靠至機台黃金工藝位
+      log('[B-9] MR 車平穩停靠至機台黃金工藝位，手臂自車頂工位直接取好卡裝機！', 'log-green');
+      await agvGo(AGV_ST.p2Work, 1200);
 
-      // ★【自車上取好卡裝上機台滑台 (微抬 ➔ 水平平移 ➔ 垂直下放)】：
-      // (1) 移至車上 Platform A 好卡正上方 ➔ 下探合緊
-      log('[B-9-1] 手爪移至車頂 Platform A 正上方下探，向內扣緊好卡！', 'log-green');
-      await setGripperClawState('OPEN', 100);
-      await setKukaArmPose(-Math.PI / 2, 0.08, 0.78, -0.86, 350);
-      await setGripperClawState('CLAMP', 250);
-      cardOnPlatformA_loaded = false;
-      syncUI();
-      cardOnGripper.visible = true;
-      cardOnGripper.children[0].material.color.setHex(0x16a34a);
-
-      // (2) ★【向上微微垂直抬起】
-      log('[B-9-2] ★【向上微微垂直抬起】好卡垂直微拔向上微抬至安全高度！', 'log-green');
-      await setKukaArmPose(-Math.PI / 2, -0.15, 0.95, -0.80, 350);
-
-      // (3) ★【水平移動到機台滑台正上方】
-      log('[B-9-3] ★【水平移動】手臂帶好卡平滑水平平移至機台滑台正上方！', 'log-green');
-      await setKukaArmPose(-1.92, 0.14, 0.75, -0.89, 420);
-
-      // (4) ★【接著再垂直下放】
-      log('[B-9-4] ★【垂直下放】手爪垂直直線平降安座於機台滑台定位銷，夾爪張開完成裝機！', 'log-green');
-      await setKukaArmPose(-1.92, 0.24, 0.85, -1.09, 350);
-      await setGripperClawState('OPEN', 200);
-      cardOnGripper.visible = false;
-      prober2.installedCard.visible = true;
-      prober2.installedCard.children[0].material.color.setHex(0x16a34a);
-      setKukaRestPose();
+      // ★ 車頂單一進出工位好卡 ➔ Prober #02 機台滑台
+      await kukaTransfer(topIoPos, () => proberStagePos(prober2), {
+        tag: 'B-9', color: 0x16a34a,
+        onGrab: () => {
+          cardOnTopStage.visible = false;
+          topStage_loaded = false;
+          syncUI();
+        },
+        onRelease: () => {
+          prober2.installedCard.visible = true;
+          prober2.installedCard.children[0].material.color.setHex(0x16a34a);
+        }
+      });
 
       // 9. 滑台縮回深黑暗室，MR 車倒退避讓，白門閉合轉綠
       log('[B-10] 滑台縮回深黑暗室 (1,600ms)，MR 車倒退避讓，白門閉合 (1,400ms)！轉綠燈！', 'log-cyan');
       const retractStage2Promise = lerpVector3(prober2.pccStageGroup, new THREE.Vector3(-2.0, 4.0, 0.5), 1600);
-      await lerpVector3(agvVehicle, new THREE.Vector3(27.8, 0, 4.0), 800);
+      await agvGo(AGV_ST.p2Wait, 800);
       await retractStage2Promise;
       await lerpRotationY(prober2.doorHingePivot, 0, 1400);
 
       prober2.status = 'HAS_GOOD';
       syncUI();
 
-      await lerpVector3(agvVehicle, new THREE.Vector3(-6, 0, 12), 1200);
+      await agvGo(AGV_ST.home, 1500);
       log('★ Prober #02 空機送好卡作業圓滿完成！MR 車返回待命！', 'log-green');
 
       setModeText(i18n[currentLang].standby);
@@ -3025,15 +3126,19 @@
       ohtLoopProgress = 0.0;
 
       agvVehicle.position.set(-6, 0, 12);
+      agvVehicle.rotation.y = 0;
       setKukaRestPose();
       cardOnGripper.visible = false;
 
-      // 車載雙平台復位
-      agvPlatformA.position.set(-1.2, 2.8, 0);
-      agvPlatformB.position.set(1.2, 1.0, 0);
-      cardOnPlatformA_loaded = false;
-      cardOnPlatformB_loaded = false;
-      activeDeckAtTop = 'A';
+// 車載單一進出工位與臂下雙槽卡匣復位
+      agvElevatorStage.position.set(1.9, 2.8, 0.0);
+      cardOnTopStage.position.set(0, 0.2, 0);
+      cardOnTopStage.visible = false;
+      cardInSlotA.visible = false;
+      cardInSlotB.visible = false;
+      topStage_loaded = false;
+      slotA_loaded = false;
+      slotB_loaded = false;
 
       bareCardOnPortB.position.set(-17.8, 4.1, 13.6);
       bareCardOnPortB.visible = false;
