@@ -712,7 +712,7 @@
       }
     };
 
-    let selectedTool = 1; // 1: Prober 1, 2: Prober 2
+    window.selectedTool = 1; // 1: Prober 1, 2: Prober 2
 
     window.toggleLanguage = function() {
       currentLang = (currentLang === 'zh') ? 'en' : 'zh';
@@ -774,9 +774,11 @@
       };
 
       window.selectTargetTool = function(toolNum) {
-        selectedTool = toolNum;
-        document.getElementById('tab-p1').classList.toggle('active', toolNum === 1);
-        document.getElementById('tab-p2').classList.toggle('active', toolNum === 2);
+        window.selectedTool = toolNum;
+        const tab1 = document.getElementById('tab-p1');
+        const tab2 = document.getElementById('tab-p2');
+        if (tab1) tab1.classList.toggle('active', toolNum === 1);
+        if (tab2) tab2.classList.toggle('active', toolNum === 2);
         if (window.syncUI) window.syncUI();
       };
     })();
@@ -799,6 +801,10 @@
     <div class="header-right">
       <!-- 語言切換按鈕 -->
       <button class="btn-lang" id="btn-lang-toggle" onclick="toggleLanguage()">🌐 EN / 繁中</button>
+      <div class="badge-status" style="display:inline-flex; align-items:center; gap:6px;">
+        <span id="mode-dot" style="width:8px; height:8px; border-radius:50%; background:var(--green); display:inline-block;"></span>
+        <strong id="mode-text">3D 產線待命 (天車常態高速巡邏)</strong>
+      </div>
       <div class="badge-status">AMHS ONLINE</div>
     </div>
   </header>
@@ -1763,6 +1769,14 @@
     let ohtLoopProgress = 0.0;
     const OHT_PATROL_SPEED = 0.095;
 
+    if (typeof window.selectedTool === 'undefined') {
+      window.selectedTool = 1;
+    }
+
+    function setModeText(txt) {
+      const el = document.getElementById('mode-text');
+      if (el) el.textContent = txt;
+    }
     const modeText = document.getElementById('mode-text');
     const logBox = document.getElementById('log-box');
 
@@ -1854,7 +1868,7 @@
       });
 
       // ★ 手動控制台 3 個按鈕動態狀態與防呆互鎖
-      const activeToolObj = (selectedTool === 1) ? prober1 : prober2;
+      const activeToolObj = (window.selectedTool === 1) ? prober1 : prober2;
       const btnFoup = document.getElementById('btn-manual-foup');
       const btnPc = document.getElementById('btn-manual-pc');
       const btnSwap = document.getElementById('btn-manual-swap');
@@ -2033,7 +2047,7 @@
       isBusy = true;
       mrIsBusy = true;
       syncUI();
-      modeText.textContent = (currentLang === 'zh') ? '執行中：Prober #01 SWAP 換卡全流程' : 'Executing: Prober #01 SWAP Flow';
+      setModeText((currentLang === 'zh') ? '執行中：Prober #01 SWAP 換卡全流程' : 'Executing: Prober #01 SWAP Flow');
       log('========================================================', 'log-cyan');
       log('>>> 開始執行 Prober #01【tsmc 旗艦解耦 SWAP 換卡流程】<<<', 'log-cyan');
       log('========================================================', 'log-cyan');
@@ -2231,7 +2245,7 @@
       await ohtDeliveryPromise;
 
       log('★ Prober #01 SWAP 換卡與平行晶圓派送全流程圓滿完成！', 'log-green');
-      modeText.textContent = i18n[currentLang].standby;
+      setModeText(i18n[currentLang].standby);
       isBusy = false;
       mrIsBusy = false;
       syncUI();
@@ -2245,7 +2259,7 @@
       isBusy = true;
       mrIsBusy = true;
       syncUI();
-      modeText.textContent = (currentLang === 'zh') ? '執行中：Prober #02 新卡裝載流程' : 'Executing: Prober #02 Load Flow';
+      setModeText((currentLang === 'zh') ? '執行中：Prober #02 新卡裝載流程' : 'Executing: Prober #02 Load Flow');
       log('========================================================', 'log-cyan');
       log('>>> 開始執行 Prober #02【空機送好卡上機作業】<<<', 'log-cyan');
       log('========================================================', 'log-cyan');
@@ -2353,7 +2367,7 @@
       await lerpVector3(agvVehicle, new THREE.Vector3(-6, 0, 12), 1400);
       log('★ Prober #02 空機送好卡作業圓滿完成！MR 車返回待命！', 'log-green');
 
-      modeText.textContent = i18n[currentLang].standby;
+      setModeText(i18n[currentLang].standby);
       isBusy = false;
       mrIsBusy = false;
       syncUI();
@@ -2365,7 +2379,7 @@
     async function runOhtDeliveryToProber(targetProber, targetFoup, targetPortX, pName) {
       ohtIsBusy = true;
       syncUI();
-      modeText.textContent = (currentLang === 'zh') ? `OHT 流程：天車自 Stocker 夾取實體 FOUP ➔ 直落 ${pName}` : `OHT: Delivering FOUP to ${pName}`;
+      setModeText((currentLang === 'zh') ? `OHT 流程：天車自 Stocker 夾取實體 FOUP ➔ 直落 ${pName}` : `OHT: Delivering FOUP to ${pName}`);
       log(`OHT: 接收到 ${pName} 綠燈可用信號，高速巡航天車 (娃娃車) 動態接單進站...`, 'log-cyan');
 
       await guideOhtToStockerStation();
@@ -2485,10 +2499,10 @@
     // =========================================================================
     window.handleManualFoup = async function() {
       if (ohtIsBusy) return;
-      const targetProber = (selectedTool === 1) ? prober1 : prober2;
-      const targetFoup = (selectedTool === 1) ? foup1 : foup2;
-      const targetPortX = (selectedTool === 1) ? (6.5 + 2.8) : (28.5 + 2.8);
-      const pName = (selectedTool === 1) ? "Prober #01" : "Prober #02";
+      const targetProber = (window.selectedTool === 1) ? prober1 : prober2;
+      const targetFoup = (window.selectedTool === 1) ? foup1 : foup2;
+      const targetPortX = (window.selectedTool === 1) ? (6.5 + 2.8) : (28.5 + 2.8);
+      const pName = (window.selectedTool === 1) ? "Prober #01" : "Prober #02";
 
       if (targetProber.hasFoup) {
         // 退 FOUP
@@ -2505,8 +2519,8 @@
 
     window.handleManualPc = async function() {
       if (mrIsBusy) return;
-      const targetProber = (selectedTool === 1) ? prober1 : prober2;
-      const pName = (selectedTool === 1) ? "Prober #01" : "Prober #02";
+      const targetProber = (window.selectedTool === 1) ? prober1 : prober2;
+      const pName = (window.selectedTool === 1) ? "Prober #01" : "Prober #02";
 
       if (targetProber.hasFoup || targetProber.status === 'TESTING') {
         log(`[INTERLOCK] 機台 ${pName} Processing 測試運轉中，安全互鎖鎖定，禁止退卡！`, 'log-red');
@@ -2515,7 +2529,7 @@
 
       if (targetProber.status === 'EMPTY') {
         // 進 PC (裝好卡)
-        if (selectedTool === 1) {
+        if (window.selectedTool === 1) {
           await runProber1SwapFlow(); // P1 初始有壞卡，若為空亦可走裝卡
         } else {
           await runProber2InstallFlow();
@@ -2531,8 +2545,8 @@
 
     window.handleManualSwap = async function() {
       if (mrIsBusy) return;
-      const targetProber = (selectedTool === 1) ? prober1 : prober2;
-      const pName = (selectedTool === 1) ? "Prober #01" : "Prober #02";
+      const targetProber = (window.selectedTool === 1) ? prober1 : prober2;
+      const pName = (window.selectedTool === 1) ? "Prober #01" : "Prober #02";
 
       if (targetProber.hasFoup || targetProber.status === 'TESTING') {
         log(`[INTERLOCK] 機台 ${pName} Processing 測試運轉中，禁止換卡！`, 'log-red');
@@ -2544,7 +2558,7 @@
       }
 
       // 執行 SWAP
-      if (selectedTool === 1) {
+      if (window.selectedTool === 1) {
         await runProber1SwapFlow();
       } else {
         // P2 若有卡也走類似 SWAP
@@ -2634,13 +2648,16 @@
       slotData[4].state = 'EMPTY_BOX';
       slotMeshList[4].userData.ledMesh.material.color.setHex(0x475569);
 
-      selectedTool = 1;
+      window.selectedTool = 1;
       selectTargetTool(1);
 
       syncUI();
-      modeText.textContent = i18n[currentLang].standby;
+      setModeText(i18n[currentLang].standby);
       log('系統已重置至初始工況：tsmc 晶圓測試標準產線 ｜ 兩顆 FOUP 在庫', 'log-orange');
     }
+
+    window.doAutoAll = doAutoAll;
+    window.doResetAll = doResetAll;
 
     window.setCameraView = function(view) {
       if (view === 'iso') {
