@@ -2596,7 +2596,7 @@ A5 0° A6 0° A7 0°</pre>
     // =========================================================================
     const ARM = { L1: 2.8, L2: 2.6, rootX: ARM_ROOT_X, rootY: 3.5, shoulderOff: 0.4,
                   toolDrop: 0.95 + 0.42, carryClear: 0.9, swingR: 3.1,
-                  restYaw: -Math.PI / 2, a1Limit: 170 * Math.PI / 180 };
+                  restYaw: -Math.PI / 2, a1Limit: 195 * Math.PI / 180 }; // 允許滿幅 180 度旋轉，無任何角度偏移
 
     let armState = { a1: 0, r: 1.67, y: 5.9 };
 
@@ -2661,6 +2661,8 @@ A5 0° A6 0° A7 0°</pre>
       const dx = l.x - ARM.rootX, dz = l.z;
       let a = Math.atan2(dx, dz) - ARM.restYaw;
       a = Math.atan2(Math.sin(a), Math.cos(a));
+      // 當目標點恰好在正後方/車頂工位 (滿幅 180 度) 時，正規化為正 Math.PI 確保順暢同向旋轉
+      if (Math.abs(Math.abs(a) - Math.PI) < 1e-4) a = Math.PI;
       return { a1: a, r: Math.hypot(dx, dz), y: l.y };
     }
 
